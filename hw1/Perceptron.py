@@ -6,6 +6,7 @@ import numpy
 import pandas
 
 
+# Network Class
 class Perceptron:
 
     def __init__(self):
@@ -15,8 +16,5 @@ class Perceptron:
     def forward(self):
         raise NotImplementedError
 
-
     def train(self):
         raise NotImplementedError
-
-
