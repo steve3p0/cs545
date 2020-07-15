@@ -1,20 +1,30 @@
 from unittest import TestCase
+import numpy as np
 
-import Perceptron
+import perceptron
 
 
 class TestPerceptron(TestCase):
+    def test_load(self):
+        self.fail()
+
+    def test_cost(self):
+        self.fail()
 
     def test_forward(self):
+        self.fail()
 
-        p = Perceptron.Perceptron()
+    def test_back(self):
+        self.fail()
 
-        p.forward()
+    def test_learn(self):
+        self.fail()
 
-        #self.fail()
+    def test_evaluate(self):
+        self.fail()
 
-    def test_integration_epoch1(self):
+    def test_report(self):
+        self.fail()
 
-        p = Perceptron.Perceptron()
-        p.train()
-
+    def test_train(self):
+        self.fail()
