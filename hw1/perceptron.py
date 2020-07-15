@@ -85,33 +85,7 @@ class Perceptron:
         # TODO: I wanna wrap this into a single object
         return dataset, data_labels
 
-    def cost(self, y_k: NDArray[10], t: int) -> NDArray[10]:
-        """ Calculate the cost of improving a y's output vector to equal target label t vector
-
-            y_k:  output vector (predicted value)
-              t:    target label for this one example (true value)
-
-            This is according to the Perceptron Slide deck on page 34-35:
-            http://web.cecs.pdx.edu/~doliotis/MachineLearningSummer2020/lectures/lecture02/PerceptronsML.pdf
-
-            ∆w_i= η(t^k - y^k)x_i^k
-
-            Δwᵢ = η(tᴷ - yᴷ)xᵢᴷ
-
-            We are calculating (t^k - y^k) here
-        """
-
-        # Create a vector for the predicted value
-        y_k = np.insert(np.zeros((1, self.output_size - 1)), np.argmax(y_k), 1)
-        # Create a vector for the actual labeled example
-        t_k = np.insert(np.zeros((1, self.output_size - 1)), t, 1)
-
-        # (t^k - y^k)
-        cost = t_k - y_k
-
-        return cost
-
-    def forward(self, image_vector: NDArray[785]) ->  NDArray[10]:
+    def forward(self,  xᴷ: NDArray[785]) ->  NDArray[10]:
         """ Feed Forward
         For a single image vector of pixels, calculate the dot product
         to activate the next (forward) layer of neurons.
@@ -121,68 +95,101 @@ class Perceptron:
         """
 
         # Remember the bias in included in the first column of every row: self.weights[x][0]
-        activation_vector = np.dot(image_vector, self.weights)
+        activation_vector = np.dot(xᴷ, self.weights)
 
         return activation_vector
 
-    def back(self, cost: np.ndarray, image_vector: np.ndarray, rate: float) ->  NDArray[785, 10]:
+    def back(self, k: int, xᴷ: NDArray[785], yᴷ: NDArray[10], η: float) -> NDArray[785, 10]:
         """ Back Propagation
-
         Update the weights by minimizing the cost that the weights will produce with the next sample
+        This is according to the Perceptron Slide deck on page 34-35:
+        http://web.cecs.pdx.edu/~doliotis/MachineLearningSummer2020/lectures/lecture02/PerceptronsML.pdf
 
-            cost (t-y):    difference between output vector y^k and the target vector t^k with true value labels
-            image_vector:  a single image vector from a data set
-            rate (n):      the learning rate
-            delta (Dw_i):  result of the dot product of a single example and the cost vector
+             wᵢ ⟵ wᵢ + Δwᵢ
+            Δwᵢ = η(tᴷ - yᴷ)xᵢᴷ
 
-            This is according to the Perceptron Slide deck on page 34-35:
-            http://web.cecs.pdx.edu/~doliotis/MachineLearningSummer2020/lectures/lecture02/PerceptronsML.pdf
+        Parameters:
+            k       The indexer used in perceptron learning algorithm
+            xᴷ      The input image vector of 784 pixel values (+1 for the bias)
+            yᴷ      The output vector (result of w * x)
+            η       The Learning rate
 
-                 w_i  <- w_i + Dw_i
-                Dw_i  =  n(t^k - y^k)x_i^k
+        Local Variables:
+            t       The next target label (true value of output)
+            tᴷ      Vectorized output layer of target value
+            yᴷ      Modify the output vector using ArgMax to zero out outputs except highest value
+            Δwᵢ     The gradient or vector derivative in order to minimize the cost function
         """
 
-        delta = np.dot(np.reshape(image_vector, (self.input_size, 1)), np.reshape(cost, (1, self.output_size)))
-        self.weights += (rate * delta)
+        # Get the target label: the true value [0-9] of the training sample image)
+        t = int(self.train_labels[k])
+
+        # Create a target vector of ten elements, light up the correct value t
+        tᴷ = np.insert(np.zeros((1, self.output_size - 1)), t, 1)
+
+        # Create a vector for the predicted value
+        yᴷ = np.insert(np.zeros((1, self.output_size - 1)), np.argmax(yᴷ), 1)
+
+        # Find the gradient of the weights
+        # Δwᵢ= η(tᴷ - yᴷ)xᵢᴷ
+
+        # Δwᵢ = η * np.dot(tᴷ - yᴷ, xᴷ)
+        # Δwᵢ = η * np.dot(xᴷ, (tᴷ - yᴷ))
+        # Δwᵢ = η * np.dot(np.reshape(xᴷ, (self.input_size, 1)), np.reshape(tᴷ - yᴷ, (1, self.output_size)))
+        # Δwᵢ = η * np.dot(np.reshape(tᴷ - yᴷ, (1, self.output_size)), np.reshape(xᴷ, (self.input_size, 1)))
+        Δwᵢ = η * np.dot(np.reshape(xᴷ, (self.input_size, 1)), np.reshape(tᴷ - yᴷ, (1, self.output_size)))
+
+        # what is the problem here?
+        #   xᴷ        ndarray: (785,) [1. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0., 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0., 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0., 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0., 0. 0. 0. 0.]
+        #   tᴷ - yᴷ   ndarray: (10, ) [-0.0019597   0.08868587  0.9632121  -0.01701219 -0.06978089 -0.09443413, -0.2448718  -0.08801273 -0.19624884  0.13512257]
+
+        # So when we fuck with this:
+        #   xᴷ        becomes   np.reshape(xᴷ, (self.input_size, 1))
+        #             {ndarray: (785, 1)} [[1.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.
+        #
+        #   tᴷ - yᴷ  becomes   np.reshape(tᴷ - yᴷ, (1, self.output_size))
+        #            {ndarray: (1, 10)}   [[-0.0019597   0.08868587  0.9632121  -0.01701219 -0.06978089 -0.09443413,  -0.2448718  -0.08801273 -0.19624884  0.13512257]]
+
+        # blash
+        #
+        # [[-1.95969690e-08  8.86858666e-07  9.63212100e-06 -1.70121873e-07,  -6.97808933e-07 -9.44341300e-07 -2.44871796e-06 -8.80127347e-07,  -1.96248841e-06  1.35122575e-06], [ 0.00000000e+00  0.00000000e+00  0.00000000e+00  0.00000000e+00,   0.00000000e+00  0.00
+
+
+        self.weights += Δwᵢ
 
         return self.weights
 
-    def learn(self, rate: float) -> np.ndarray(shape=(785, 10)):
-        """ Make the Perceptron LEARN!!!
-        To help match this code with the symbols used in the Perceptron Learning Algorithm described
-        on page 33 of the Perceptron Slide Deck, I am violating some python naming conventions here.
+    def learn(self, η: float) -> NDArray[785, 10]:
+        """ The Perceptron Learning Algorithm
+        Iterate thru all training examples, feeding the outputs forward and back propagating the
+        updated weights. This function tries to exactly model the algorithm as it is described
+        in this slide on page 35:
+
         http://web.cecs.pdx.edu/~doliotis/MachineLearningSummer2020/lectures/lecture02/PerceptronsML.pdf
-        code below.
+
+             wᵢ ⟵ wᵢ + Δwᵢ
+            Δwᵢ  = η(tᴷ - yᴷ)xᵢᴷ
+
+        Parameters:
+            η       The Learning rate
 
         Local Variables:
-
             M       M is the total number of training examples
             k       k  is the indexer used in the slide deck
-            x_k     x^k is the input  (layer) vector of 784 (+1 bias) pixels of a single image
-            y_k     y^k is the output (layer) vector of 10 nodes representing activation level of a digit
-            t       t   is a single value representing the correct target label [0-9] of the training example
-
+            xᴷ      xᴷ is the input  (layer) vector of 784 (+1 bias) pixels of a single image
+            yᴷ      yᴷ is the output (layer) vector of 10 nodes representing activation level of a digit
         """
         M = len(self.train_labels)
         for k in range(0, M):
 
-            # Get the input layer vector of 784 pixels
-            x_k = self.train_data[k]
+            # Get xᴷ, the next input training example (image vector of 784 pixels + 1 bias)
+            xᴷ = self.train_data[k]
 
-            # Feed that forward by applying the weights
-            y_k = self.forward(x_k)
+            # Get yᴷ, the output vector by applying the weights to xᴷ and feeding that forward to the next layer
+            yᴷ = self.forward(xᴷ)
 
-            # Grab the single target value for k
-            # This is the actual correct label for the image
-            t = int(self.train_labels[k])
-
-            # Find the difference between the activations in y^k with the true target label t
-            # That difference is the cost (or error) we need to minimize by updating the weights
-            # in back propagation
-            cost = self.cost(y_k, t)
-
-            # Back propagate these weights
-            self.weights = self.back(cost, self.train_data[k, :], rate)
+            # Update the weights using the Perceptron training Algorithm and propagate them back
+            self.weights = self.back(k, xᴷ, yᴷ, η)
 
         return self.weights
 
@@ -233,10 +240,11 @@ class Perceptron:
         plt.xlabel("Epochs")
         plt.show()
 
-    def train(self, rate: float, epoch=1, bias=1) -> None:
+    def train(self, rate: float, epoch=1, bias=1) -> NDArray[785, 10]:
         """
         Train 10 perceptrons to recognize handwritten digits
         Reports the accuracy and a confusion matrix
+        Returns the Perceptrons in the form of a 785 x 10 matrix
 
         rate:    The learning rate
         epoch:   An iteration of training over all training examples
@@ -280,6 +288,7 @@ class Perceptron:
         # Report Accuracy and Confusion Matrix
         self.report(test_accu, rate, pred, arr_train_acc, arr_test_acc)
 
+        return self.weights
 
 train_file = 'mnist_train.csv'
 test_file = 'mnist_validation.csv'

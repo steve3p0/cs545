@@ -1,7 +1,7 @@
 from unittest import TestCase
 import numpy as np
 
-import perceptron
+import perceptron as pt
 
 
 class TestPerceptron(TestCase):
@@ -27,4 +27,17 @@ class TestPerceptron(TestCase):
         self.fail()
 
     def test_train(self):
+
+        train_file = 'mnist_train.csv'
+        test_file = 'mnist_validation.csv'
+        epochs = 3
+
+        p = pt.Perceptron(sizes=[785, 10], train_filename=train_file, test_filename=test_file, epochs=epochs)
+
+
+
+        perceptron_model = p.train(rate=0.00001)
+        perceptron_model = p.train(rate=0.001)
+        perceptron_model = p.train(rate=0.1)
+
         self.fail()
