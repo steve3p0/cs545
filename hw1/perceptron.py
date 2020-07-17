@@ -223,6 +223,8 @@ class Perceptron:
     def evaluate(self, dataset: NDArray[785], data_labels: NDArray[int]) -> (float, NDArray[int]):
         """ Evaulate Accuracy
         Calculate the accuracy of the perceptron's predictions for a given dataset
+
+        Parameters:
             dataset:        image vector of 784 pixels + 1 bias
             data_labels:    true target output
         """
@@ -245,29 +247,17 @@ class Perceptron:
         """ Report results from training
         Display a confusion matrix and plot the accuracy
 
-        :param test_accuracy:
-        :type test_accuracy:
-        :param learn_rate:
-        :type learn_rate:
-        :param prediction:
-        :type prediction:
-        :param arr_train_acc:
-        :type arr_train_acc:
-        :param arr_test_acc:
-        :type arr_test_acc:
-        :return:
-        :rtype:
+        Parameters:
+            rate                    The learning rate used to train the network of perceptrons
+            prediction              The values that the perceptron network predicted on the test data
+            test_accuracy           The accuracy of how well the perceptron network
+            train_epoch_accuracy    A list of all training accuracy scores for all epochs
+            test_epoch_accuracy     A list of all testing accuracy scores for all epochs
         """
-
-        # print("\t\tTest Set Accuracy = " + str(test_accuracy) +
-        #       "\n\nLearning Rate = " + str(rate) +
-        #       "\n\nConfusion Matrix :\n")
 
         # Confusion Matrix
         labels = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         conf_matrix = confusion_matrix(self.test_labels, prediction, labels=labels)
-
-        print("\n")
         df_cm = pd.DataFrame(conf_matrix, range(self.output_size), range(self.output_size))
         sn.set(font_scale=1.4)
         sn.heatmap(df_cm, annot=True, fmt='d', annot_kws={"size": 12})
@@ -282,65 +272,55 @@ class Perceptron:
         # TODO: Make sure epoch intervals are an integer
         # https://stackoverflow.com/questions/12050393/how-to-force-the-y-axis-to-only-use-integers-in-matplotlib
         plt.xlabel("Epochs")
-
         plt.show()
 
-        print(f"Test Accuracy: {test_epoch_accuracy}")
+        print(f"\n")
+        print(f"Test Accuracy: {test_accuracy:.1%}")
         print(f"Learning Rate: {np.format_float_positional(rate, trim='-')}%")
         print(f"Confusion Matrix: ")
         print(conf_matrix)
 
-    def train(self, rate: float, epochs=50) -> NDArray[785, 10]:
+    def train(self, rate: float, epochs=50, initial_weight_low=-.05, initial_weight_high=.05) -> (NDArray[785, 10], float):
         """ Perceptron Network Training
         Train 10 perceptrons to recognize handwritten digits
         Reports the accuracy and a confusion matrix
         Returns the Perceptron model in the form of weights in a 785 x 10 matrix
 
-        rate:    The learning rate
-        epoch:   An iteration of training over all training examples
+        Parameters:
+            rate                    The learning rate
+            epochs                  The total number of training interations to run over all the training samples
+            initial_weight_low      The min range value for the initial randomized weights
+            initial_weight_high     The max range value for the initial randomized weights
+
+        Return Values:
+            NDArray[785, 10]        Perceptron model in the form of weights in a 785 x 10 matrix
+            float                   The testing accuracy score
         """
 
         # Initialize weight matrix with random values
-        self.weights = np.random.uniform(low=-0.05, high=0.05, size=(self.input_size, self.output_size))
+        self.weights = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(self.input_size, self.output_size))
 
-        epoch = 0
-        arr_epoch = []
-        arr_test_acc = []
-        arr_train_acc = []
+        train_epoch_accuracy = []
+        test_epoch_accuracy = []
 
-        while (1):
-            train_accuracy, pred = self.evaluate(self.train_data, self.train_labels)
-            print(f"Epoch {epoch}:\tTraining Accuracy: {train_accuracy}")
-            if epoch == epochs:
-                break
+        for epoch in range(0, epochs + 1):
+            # Evaluate the perceptron network's training accuracy
+            train_accuracy, _ = self.evaluate(self.train_data, self.train_labels)
+            train_epoch_accuracy.append(train_accuracy)
+            print(f"Epoch {epoch}:\tTraining Accuracy: {train_accuracy:.1%}")
 
-            # Evaluate the usefulness of the perceptrons
-            test_accuracy, pred = self.evaluate(self.test_data, self.test_labels)
-            print(f"\t\t\tTesting Accuracy: {test_accuracy}")
+            # Evaluate how well the perceptron network generalizes to non-training test data
+            test_accuracy, _ = self.evaluate(self.test_data, self.test_labels)
+            test_epoch_accuracy.append(test_accuracy)
+            print(f"\t\t\tTesting Accuracy:  {test_accuracy:.1%}")
 
-            # What are we doing with this?
-            prev_accu = train_accuracy
-
-            epoch += 1
-
-            # Train the network
+            # Learn the weights based on the rate
             self.weights = self.learn(rate)
 
-            arr_epoch.append(epoch)
-            arr_train_acc.append(train_accuracy)
-            arr_test_acc.append(test_accuracy)
-
         # Evaluate Perceptron Network on Test Data
-        test_accuracy, predictions = self.evaluate(self.test_data, self.test_labels)
+        test_accuracy, test_predictions = self.evaluate(self.test_data, self.test_labels)
 
         # Report Accuracy and Confusion Matrix
-        self.report(rate, predictions, test_accuracy, arr_train_acc, arr_test_acc)
+        self.report(rate, test_predictions, test_accuracy, train_epoch_accuracy, test_epoch_accuracy)
 
         return self.weights, test_accuracy
-
-# train_file = 'mnist_train.csv'
-# test_file = 'mnist_validation.csv'
-# p = Perceptron(sizes=[785, 10], train_filename=train_file, test_filename=test_file, epochs=3, bias=1)
-# p.train(rate=0.00001)
-# p.train(rate=0.001)
-# p.train(rate=0.1)
