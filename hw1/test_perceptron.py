@@ -75,13 +75,38 @@ class TestPerceptron(TestCase):
         assert(np.allclose(labels, testdata.train_labels_60))
 
     def test_forward(self):
-        self.fail()
+        bias = 1
+        initial_weight_low = -0.05
+        initial_weight_high = 0.05
+        p = pt.Perceptron(sizes=[785, 10], bias=bias)
+
+        p.weights = np.random.uniform(low=initial_weight_low, high=initial_weight_high,
+                                         size=(p.input_size, p.output_size))
+        xᴷ = testdata.train_data_60[0]
+
+        yᴷ = p.forward(xᴷ)
+        assert (yᴷ.shape == (10, ))
 
     def test_back(self):
         self.fail()
 
     def test_learn(self):
-        self.fail()
+        bias = 1
+        initial_weight_low = -0.05
+        initial_weight_high = 0.05
+        rate = 0.1
+
+        p = pt.Perceptron(sizes=[785, 10], bias=bias)
+
+        p.train_labels = testdata.train_labels_60
+        p.train_data = testdata.train_data_60
+
+        p.weights = np.random.uniform(low=initial_weight_low, high=initial_weight_high,
+                                         size=(p.input_size, p.output_size))
+
+        p.weights = p.learn(rate)
+
+        assert (p.weights.shape == (785, 10))
 
     def test_evaluate(self):
         self.fail()
