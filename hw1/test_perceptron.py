@@ -106,10 +106,21 @@ class TestPerceptron(TestCase):
 
         p.weights = p.learn(rate)
 
-        assert (p.weights.shape == (785, 10))
+        assert(p.weights.shape == (785, 10))
 
     def test_evaluate(self):
-        self.fail()
+        bias = 1
+        p = pt.Perceptron(sizes=[785, 10], bias=bias)
+        p.test_data = testdata.test_data_10
+        p.test_labels = testdata.test_labels_10
+        p.weights = testdata.saved_weights
+
+        accuracy, predictions = p.evaluate(dataset=p.test_data, data_labels=p.test_labels)
+
+        expected_predictions = [7, 2, 1, 0, 9, 1, 4, 9, 6, 9]
+
+        assert(accuracy > .70)
+        assert(predictions == expected_predictions)
 
     def test_report(self):
         self.fail()
