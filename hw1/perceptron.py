@@ -1,43 +1,65 @@
 # CS 545 Machine Learning
+# Winter 2020 Portland State University
 # Professor: Dr. Paul Doliotis
+# Steve Braich
 # HW #1: Perceptron
-from typing import List, Any
 
+# Vectorization Libraries
 import numpy as np
+import pandas as pd
+
+# Reporting and Metrics Libraries
 from sklearn.metrics import *
 import matplotlib.pyplot as plt
 import seaborn as sn
-import pandas as pd
+
+# Type Hinting Libraries
 from nptyping import NDArray
-from typing import Any
+from typing import List, Any
+
+from tqdm import tqdm
 
 
 class Perceptron:
+    """
+    This class creates a network of 10 perceptrons to recognize handwritten digits [0-9]
 
-    weights: List[Any]
+    Example usage:
+        p = Perceptron(sizes=[785, 10], train_filename=file, test_filename=file, bias=1)
 
-    def __init__(self, sizes: List[int], train_filename, test_filename, epochs=50, bias=1):
+        p.train(rate=0.00001, epochs=50)
+        p.train(rate=0.001,   epochs=50)
+        p.train(rate=0.1,     epochs=50)
+
+    """
+
+    # Properties Set During Compile Time
+    weights: NDArray[785, 10]
+    layers: int
+    input_size: int
+    output_size: int
+    bias: int
+
+    # Properties set during Run Time
+    epochs: int
+    rate: float
+
+    # Data and Labels for Training and Testing
+    test_data: NDArray[Any, 785]
+    test_labels: NDArray[Any]
+    train_data: NDArray[Any, 785]
+    train_labels: NDArray[Any]
+
+    def __init__(self, sizes: List[int], train_filename=None, test_filename=None, bias=1):
         """ Constructor for Perceptron
         The constructor for this class does the following:
-         (1) Iinitializes the layers, sizes of each layer, the number of epochs, and the bias.
-         (2) Loads in the train and test data
-         (3) Initializes the weights to an empty list.
+         (1) Initializes the layers, sizes of each layer, and the bias.
+         (2) Loads in the train and test data  (this is optional - you can load it later)
+         (3) Initializes the weights to an empty numpy array.
         Note: Ihis class object is set up this way so that you can instantiate a Perceptron
         object with all the necessary attributes to run multiple trainings.
-
-        When you run the train() method, every class property is persisted except for weights
-
-            p = Perceptron(sizes=[785, 10], train_filename=file, test_filename=file, epochs=50, bias=1)
-            p.train(rate=0.00001)
-            p.train(rate=0.001)
-            p.train(rate=0.1)
-
-        You can also override optional parameters epoch and bias when you train as well:
-
-            p.train(rate=0.1)
-            p.train(rate=0.1, epoch=100, bias=.1)
-
         """
+
         self.layers = len(sizes)
         self.sizes = sizes
         self.input_size = sizes[0]
@@ -47,16 +69,21 @@ class Perceptron:
         # TODO: This should be initialized to 0 here
         # The number of epochs and the learning rate should be something
         # we set during training
-        self.epochs = epochs
+        self.epochs = 0
         self.rate = 0.0
 
-        # TODO: this is kind of useless right now.
-        # I kind of want to separate the bias inputs from the test inputs
-        self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
-
         # TODO: Wrap the data and labels in a set
-        self.train_data, self.train_labels = self.load(train_filename)
-        self.test_data, self.test_labels = self.load(test_filename)
+        if train_filename is None:
+            self.train_data = None
+            self.train_labels = None
+        else:
+            self.train_data, self.train_labels = self.load(train_filename)
+
+        if test_filename is None:
+            self.test_data = None
+            self.test_labels = None
+        else:
+            self.test_data, self.test_labels = self.load(test_filename)
 
         # The weight matrix is ultimately the output of this Perceptron
         # (specifically the train() function)
@@ -85,12 +112,12 @@ class Perceptron:
         # TODO: I wanna wrap this into a single object
         return dataset, data_labels
 
-    def forward(self,  xᴷ: NDArray[785]) ->  NDArray[10]:
+    def forward(self, xᴷ: NDArray[785]) ->  NDArray[10]:
         """ Feed Forward
         For a single image vector of pixels, calculate the dot product
         to activate the next (forward) layer of neurons.
 
-        The result will be inputs (x_k) of the next layer, hence the
+        The result will be inputs xᴷ of the next layer, hence the
         name forward.
         """
 
@@ -193,11 +220,11 @@ class Perceptron:
 
         return self.weights
 
-    def evaluate(self, dataset, data_labels) -> (float, np.ndarray):
+    def evaluate(self, dataset: NDArray[785], data_labels: NDArray[int]) -> (float, NDArray[int]):
         """ Evaulate Accuracy
         Calculate the accuracy of the perceptron's predictions for a given dataset
             dataset:        image vector of 784 pixels + 1 bias
-            data_labels:    tru target output
+            data_labels:    true target output
         """
 
         prediction = []
@@ -213,42 +240,64 @@ class Perceptron:
 
         return accuracy, prediction
 
-    def report(self, test_accuracy, learn_rate, prediction, arr_train_acc, arr_test_acc):
-        # Confusion Matrix
-        print("\t\tTest Set Accuracy = " + str(test_accuracy) +
-              "\n\nLearning Rate = " + str(learn_rate) +
-              "\n\nConfusion Matrix :\n")
-        conf_matrix = confusion_matrix(self.test_labels, prediction)
-        print(confusion_matrix(self.test_labels, prediction))
-        print("\n")
+    def report(self, rate: float, prediction: List[int], test_accuracy: float,
+                     train_epoch_accuracy: List[float], test_epoch_accuracy: List[float]) -> None:
+        """ Report results from training
+        Display a confusion matrix and plot the accuracy
 
+        :param test_accuracy:
+        :type test_accuracy:
+        :param learn_rate:
+        :type learn_rate:
+        :param prediction:
+        :type prediction:
+        :param arr_train_acc:
+        :type arr_train_acc:
+        :param arr_test_acc:
+        :type arr_test_acc:
+        :return:
+        :rtype:
+        """
+
+        # print("\t\tTest Set Accuracy = " + str(test_accuracy) +
+        #       "\n\nLearning Rate = " + str(rate) +
+        #       "\n\nConfusion Matrix :\n")
+
+        # Confusion Matrix
+        labels = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        conf_matrix = confusion_matrix(self.test_labels, prediction, labels=labels)
+
+        print("\n")
         df_cm = pd.DataFrame(conf_matrix, range(self.output_size), range(self.output_size))
         sn.set(font_scale=1.4)
-        # font size
         sn.heatmap(df_cm, annot=True, fmt='d', annot_kws={"size": 12})
-
-        #plt.title("Learning Rate %r" % learn_rate)
-        plt.title(f"Learning Rate {learn_rate}")
+        plt.title(f"Learning Rate {np.format_float_positional(rate, trim='-')}%")
         plt.show()
 
         # Graph Plot
-        #plt.title("Learning Rate %r" % learn_rate)
-        plt.title(f"Learning Rate {learn_rate}")
-        plt.plot(arr_train_acc)
-        plt.plot(arr_test_acc)
+        plt.title(f"Learning Rate {np.format_float_positional(rate, trim='-')}%")
+        plt.plot(train_epoch_accuracy)
+        plt.plot(test_epoch_accuracy)
         plt.ylabel("Accuracy %")
+        # TODO: Make sure epoch intervals are an integer
+        # https://stackoverflow.com/questions/12050393/how-to-force-the-y-axis-to-only-use-integers-in-matplotlib
         plt.xlabel("Epochs")
+
         plt.show()
 
-    def train(self, rate: float, epoch=1, bias=1) -> NDArray[785, 10]:
-        """
+        print(f"Test Accuracy: {test_epoch_accuracy}")
+        print(f"Learning Rate: {np.format_float_positional(rate, trim='-')}%")
+        print(f"Confusion Matrix: ")
+        print(conf_matrix)
+
+    def train(self, rate: float, epochs=50) -> NDArray[785, 10]:
+        """ Perceptron Network Training
         Train 10 perceptrons to recognize handwritten digits
         Reports the accuracy and a confusion matrix
-        Returns the Perceptrons in the form of a 785 x 10 matrix
+        Returns the Perceptron model in the form of weights in a 785 x 10 matrix
 
         rate:    The learning rate
         epoch:   An iteration of training over all training examples
-        bias:    A way to get the perceptron to fire
         """
 
         # Initialize weight matrix with random values
@@ -261,14 +310,13 @@ class Perceptron:
 
         while (1):
             train_accuracy, pred = self.evaluate(self.train_data, self.train_labels)
-            print(f"Epoch {str(epoch)} :\tTraining Set Accuracy = {str(train_accuracy)}")
-            if epoch == self.epochs:
-                # If network is converged, stop training
+            print(f"Epoch {epoch}:\tTraining Accuracy: {train_accuracy}")
+            if epoch == epochs:
                 break
 
             # Evaluate the usefulness of the perceptrons
             test_accuracy, pred = self.evaluate(self.test_data, self.test_labels)
-            print(f"\t\tTest Set Accuracy = {str(test_accuracy)}")
+            print(f"\t\t\tTesting Accuracy: {test_accuracy}")
 
             # What are we doing with this?
             prev_accu = train_accuracy
@@ -282,17 +330,17 @@ class Perceptron:
             arr_train_acc.append(train_accuracy)
             arr_test_acc.append(test_accuracy)
 
-        # Test network on test set and get test accuracy
-        test_accu, pred = self.evaluate(self.test_data, self.test_labels)
+        # Evaluate Perceptron Network on Test Data
+        test_accuracy, predictions = self.evaluate(self.test_data, self.test_labels)
 
         # Report Accuracy and Confusion Matrix
-        self.report(test_accu, rate, pred, arr_train_acc, arr_test_acc)
+        self.report(rate, predictions, test_accuracy, arr_train_acc, arr_test_acc)
 
-        return self.weights
+        return self.weights, test_accuracy
 
-train_file = 'mnist_train.csv'
-test_file = 'mnist_validation.csv'
-p = Perceptron(sizes=[785, 10], train_filename=train_file, test_filename=test_file, epochs=3, bias=1)
-p.train(rate=0.00001)
-p.train(rate=0.001)
-p.train(rate=0.1)
+# train_file = 'mnist_train.csv'
+# test_file = 'mnist_validation.csv'
+# p = Perceptron(sizes=[785, 10], train_filename=train_file, test_filename=test_file, epochs=3, bias=1)
+# p.train(rate=0.00001)
+# p.train(rate=0.001)
+# p.train(rate=0.1)
