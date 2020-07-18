@@ -11,6 +11,40 @@ import perceptron as pt
 import test_perceptron_data as testdata
 
 
+class TestPerceptronFull(TestCase):
+
+    def test_full(self):
+        """ FULL INTEGRATION TEST
+        This test runs all three trainings required for HW #1
+
+        ASSUMPTION:
+        That you have the MNIST train and test files in current directory
+        with exact filename below
+        """
+        train_file = 'mnist_train.csv'
+        test_file = 'mnist_validation.csv'
+
+        bias = 1
+        epochs = 50
+
+        p = pt.Perceptron(sizes=[785, 10], train_filename=train_file, test_filename=test_file, bias=bias)
+
+        rate = 0.00001
+        model, accuracy = p.train(rate=rate, epochs=epochs)
+        assert (model.shape == (785, 10))
+        assert (accuracy > .80)
+
+        rate = 0.001
+        model, accuracy = p.train(rate=rate, epochs=epochs)
+        assert (model.shape == (785, 10))
+        assert (accuracy > .80)
+
+        rate = 0.1
+        model, accuracy = p.train(rate=rate, epochs=epochs)
+        assert (model.shape == (785, 10))
+        assert (accuracy > .80)
+
+
 class TestPerceptron(TestCase):
 
     def create_test_data(self, filename):

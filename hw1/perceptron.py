@@ -244,7 +244,7 @@ class Perceptron:
         return accuracy, prediction
 
     def report(self, rate: float, prediction: List[int], test_accuracy: float,
-                     train_epoch_accuracy: List[float], test_epoch_accuracy: List[float]) -> None:
+                     train_epoch_accuracy: List[float], test_epoch_accuracy: List[float]) -> NDArray[10, 10]:
         """ Report results from training
         Display a confusion matrix and plot the accuracy
 
