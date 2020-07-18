@@ -1,4 +1,4 @@
-from unittest import TestCase
+import unittest
 import numpy as np
 import unittest.mock as mock
 import sys
@@ -11,7 +11,7 @@ import perceptron as pt
 import test_perceptron_data as testdata
 
 
-class TestPerceptronFull(TestCase):
+class TestPerceptronFull(unittest.TestCase):
 
     def test_full(self):
         """ FULL INTEGRATION TEST
@@ -45,8 +45,9 @@ class TestPerceptronFull(TestCase):
         assert (accuracy > .80)
 
 
-class TestPerceptron(TestCase):
+class TestPerceptron(unittest.TestCase):
 
+    @unittest.skip("Helper function")
     def create_test_data(self, filename):
         """ Helper function
         User to create small segments of data for unit testing
@@ -66,7 +67,6 @@ class TestPerceptron(TestCase):
         print(f"{filename}: datalabels = np.{data_labels_str}")
 
         #conf_maxtrix_str = np.array_repr(conf_matrix, max_line_width=None, precision=0).replace('\n', '').replace(' ','').replace('],', '],\n')
-
 
     def test__init__nofileload(self):
         sizes = [785, 10]
@@ -91,7 +91,6 @@ class TestPerceptron(TestCase):
 
     @mock.patch('numpy.loadtxt')
     def test__init__with_fileload(self, np_loadtxt):
-
         train_file = 'MOCK FILE PATH'
         test_file = 'MOCK FILE PATH'
         np_loadtxt.return_value = testdata.test_datafile_10
@@ -144,7 +143,22 @@ class TestPerceptron(TestCase):
         assert (yᴷ.shape == (10, ))
 
     def test_back(self):
-        self.fail()
+        bias = 1
+        initial_weight_low = -0.05
+        initial_weight_high = 0.05
+        p = pt.Perceptron(sizes=[785, 10], bias=bias)
+
+        p.weights = np.random.uniform(low=initial_weight_low, high=initial_weight_high,
+                                         size=(p.input_size, p.output_size))
+        p.train_labels = testdata.train_labels_60
+
+        k = 0
+        xᴷ = testdata.train_data_60[k]
+        yᴷ = p.forward(xᴷ)
+        η  = 0.1
+        weights = p.back(k, xᴷ, yᴷ, η=η)
+
+        assert (weights.shape == (785, 10))
 
     def test_learn(self):
         bias = 1
