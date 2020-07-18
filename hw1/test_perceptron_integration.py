@@ -30,8 +30,49 @@ class TestPerceptronIntegration(TestCase):
         assert (model.shape == (785, 10))
         assert (accuracy > .80)
 
+    #######################################
+    # Full Blown - Integration Tests
+    def test_train_epoch50_rate_point00001(self):
+        train_file = 'mnist_train.csv'
+        test_file = 'mnist_validation.csv'
+        bias = 1
+        epochs = 50
+        rate = 0.00001
+
+        p = pt.Perceptron(sizes=[785, 10], train_filename=train_file, test_filename=test_file, bias=bias)
+        model, accuracy = p.train(rate=rate, epochs=epochs)
+
+        assert (model.shape == (785, 10))
+        assert (accuracy > .80)
+
+    def test_train_epoch50_rate_point001(self):
+        train_file = 'mnist_train.csv'
+        test_file = 'mnist_validation.csv'
+        bias = 1
+        epochs = 50
+        rate = 0.001
+
+        p = pt.Perceptron(sizes=[785, 10], train_filename=train_file, test_filename=test_file, bias=bias)
+        model, accuracy = p.train(rate=rate, epochs=epochs)
+
+        assert (model.shape == (785, 10))
+        assert (accuracy > .80)
+
+    def test_train_epoch50_rate_point1(self):
+        train_file = 'mnist_train.csv'
+        test_file = 'mnist_validation.csv'
+        bias = 1
+        epochs = 50
+        rate = 0.1
+
+        p = pt.Perceptron(sizes=[785, 10], train_filename=train_file, test_filename=test_file, bias=bias)
+        model, accuracy = p.train(rate=rate, epochs=epochs)
+
+        assert (model.shape == (785, 10))
+        assert (accuracy > .80)
+
     ###############################################################
-    ## Misc. Integration tests
+    ## Smaller Training Sizes Integration tests
 
     def test_train_60_epoch10_rate_point1_initialweights_1(self):
         train_file = 'mnist_train_60.csv'
@@ -124,46 +165,8 @@ class TestPerceptronIntegration(TestCase):
         assert (model.shape == (785, 10))
         assert (accuracy > .70)
 
-    #######################################
-    # Full Blown - Integration Tests
-    def test_train_epoch50_rate_point1(self):
-        train_file = 'mnist_train.csv'
-        test_file = 'mnist_validation.csv'
-        bias = 1
-        epochs = 50
-        rate = 0.1
-
-        p = pt.Perceptron(sizes=[785, 10], train_filename=train_file, test_filename=test_file, bias=bias)
-        model, accuracy = p.train(rate=rate, epochs=epochs)
-
-        assert (model.shape == (785, 10))
-        assert (accuracy > .80)
-
-    def test_train_epoch50_rate_point001(self):
-        train_file = 'mnist_train.csv'
-        test_file = 'mnist_validation.csv'
-        bias = 1
-        epochs = 50
-        rate = 0.001
-
-        p = pt.Perceptron(sizes=[785, 10], train_filename=train_file, test_filename=test_file, bias=bias)
-        model, accuracy = p.train(rate=rate, epochs=epochs)
-
-        assert (model.shape == (785, 10))
-        assert (accuracy > .80)
-
-    def test_train_epoch50_rate_point00001(self):
-        train_file = 'mnist_train.csv'
-        test_file = 'mnist_validation.csv'
-        bias = 1
-        epochs = 50
-        rate = 0.00001
-
-        p = pt.Perceptron(sizes=[785, 10], train_filename=train_file, test_filename=test_file, bias=bias)
-        model, accuracy = p.train(rate=rate, epochs=epochs)
-
-        assert (model.shape == (785, 10))
-        assert (accuracy > .80)
+    ##########################################################
+    # Different Weights
 
     def test_train_epoch50_rate_point1_initialweights_1(self):
         train_file = 'mnist_train.csv'

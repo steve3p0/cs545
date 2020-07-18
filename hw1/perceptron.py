@@ -85,6 +85,7 @@ class Perceptron:
         else:
             self.test_data, self.test_labels = self.load(test_filename)
 
+        # TODO: For testing purposes allow for passing weights in as a param
         # The weight matrix is ultimately the output of this Perceptron
         # (specifically the train() function)
         # It is a model by which we can recognize digits
@@ -274,11 +275,7 @@ class Perceptron:
         plt.xlabel("Epochs")
         plt.show()
 
-        print(f"\n")
-        print(f"Test Accuracy: {test_accuracy:.1%}")
-        print(f"Learning Rate: {np.format_float_positional(rate, trim='-')}%")
-        print(f"Confusion Matrix: ")
-        print(conf_matrix)
+        return conf_matrix
 
     def train(self, rate: float, epochs=50, initial_weight_low=-.05, initial_weight_high=.05) -> (NDArray[785, 10], float):
         """ Perceptron Network Training
@@ -321,6 +318,11 @@ class Perceptron:
         test_accuracy, test_predictions = self.evaluate(self.test_data, self.test_labels)
 
         # Report Accuracy and Confusion Matrix
-        self.report(rate, test_predictions, test_accuracy, train_epoch_accuracy, test_epoch_accuracy)
+        conf_matrix = self.report(rate, test_predictions, test_accuracy, train_epoch_accuracy, test_epoch_accuracy)
+        print(f"\n")
+        print(f"Test Accuracy: {test_accuracy:.1%}")
+        print(f"Learning Rate: {np.format_float_positional(rate, trim='-')}%")
+        print(f"Confusion Matrix: ")
+        print(conf_matrix)
 
         return self.weights, test_accuracy
