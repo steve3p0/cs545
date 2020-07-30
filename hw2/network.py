@@ -2,7 +2,7 @@
 # Winter 2020 Portland State University
 # Professor: Dr. Paul Doliotis
 # Steve Braich
-# HW #1: Perceptron
+# HW #2: Neural Network
 
 # Vectorization Libraries
 import numpy as np
@@ -34,21 +34,29 @@ class Network:
     """
 
     # Properties Set During Compile Time
-    weights: NDArray[785, 10]
+    weights: NDArray[785, 10]   # TODO: Change 785 to 784?
     layers: int
     input_size: int
+    hidden_size: int
     output_size: int
-    bias: int
 
     # Properties set during Run Time
+    η: float
+    α: float
+    target: float
+    bias: int
     epochs: int
-    rate: float
 
     # Data and Labels for Training and Testing
+    # TODO: Change 785 to 784?
     test_data: NDArray[Any, 785]
     test_labels: NDArray[Any]
     train_data: NDArray[Any, 785]
     train_labels: NDArray[Any]
+
+    # Weight vectors for the input and hidden layers
+    wᵢ = NDArray[785, 10]
+    wⱼ = NDArray[785, 10]
 
     def __init__(self, sizes: List[int], train_filename=None, test_filename=None, bias=1):
         """ Constructor for Perceptron
@@ -56,22 +64,27 @@ class Network:
          (1) Initializes the layers, sizes of each layer, and the bias.
          (2) Loads in the train and test data  (this is optional - you can load it later)
          (3) Initializes the weights to an empty numpy array.
-        Note: Ihis class object is set up this way so that you can instantiate a Perceptron
+        Note: Ihis class object is set up this way so that you can instantiate a Neural Network
         object with all the necessary attributes to run multiple trainings.
         """
 
+        # Set the dimensions of our network
         self.layers = len(sizes)
         self.sizes = sizes
         self.input_size = sizes[0]
+        self.hidden_size = sizes[1]     # TODO: There could be multiple hidden layers
         self.output_size = sizes[len(sizes) - 1]
+
         self.bias = bias
 
-        # TODO: This should be initialized to 0 here
-        # The number of epochs and the learning rate should be something
-        # we set during training
+        # Initialize the learning rate η, the momentum α, the bias, the target, and number of epochs
+        # These will be set during training
+        self.η = 0.0
+        self.α = 0.0
+        self.target = 0.0
         self.epochs = 0
-        self.rate = 0.0
 
+        # Load the training samples
         # TODO: Wrap the data and labels in a set
         if train_filename is None:
             self.train_data = None
@@ -86,10 +99,12 @@ class Network:
             self.test_data, self.test_labels = self.load(test_filename)
 
         # TODO: For testing purposes allow for passing weights in as a param
+        # TODO: Allow this initialization to happen during training
         # The weight matrix is ultimately the output of this Perceptron
         # (specifically the train() function)
         # It is a model by which we can recognize digits
-        self.weights = NDArray[785, 10]
+        self.wᵢ = NDArray[785, 10]
+        self.wⱼ = NDArray[785, 10]
 
     def load(self, filename: str) -> (NDArray[Any, 785], NDArray[Any]):
         """ Load in mnist data set
