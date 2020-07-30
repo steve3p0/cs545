@@ -81,6 +81,7 @@ class TestNetwork(unittest.TestCase):
         # conf_maxtrix_str = np.array_repr(conf_matrix, max_line_width=None, precision=0).replace('\n', '').replace(' ','').replace('],', '],\n')
 
     def test__init__nofileload(self):
+        layers = 3
         input_size = 785
         hidden_size = 20
         output_size = 10
@@ -89,7 +90,7 @@ class TestNetwork(unittest.TestCase):
 
         n = nn.Network(sizes=sizes, bias=bias)
 
-        assert(n.layers == 3)
+        assert(n.layers == layers)
         assert(n.sizes == sizes)
         assert(n.input_size == input_size)
         assert(n.hidden_size == hidden_size)
@@ -115,18 +116,31 @@ class TestNetwork(unittest.TestCase):
         train_file = 'MOCK FILE PATH'
         test_file = 'MOCK FILE PATH'
         np_loadtxt.return_value = testdata.test_datafile_10
+
+        layers = 3
+        input_size = 785
+        hidden_size = 20
+        output_size = 10
+        sizes = [input_size, hidden_size, output_size]
         bias = 1
 
-        n = nn.Network(sizes=[785, 10], train_filename=train_file, test_filename=test_file, bias=bias)
+        n = nn.Network(sizes=sizes, train_filename=train_file, test_filename=test_file, bias=bias)
 
-        assert(n.layers == 2)
-        assert(n.input_size == 785)
-        assert(n.output_size == 10)
+        assert(n.layers == layers)
+        assert(n.sizes == sizes)
+        assert(n.input_size == input_size)
+        assert(n.hidden_size == hidden_size)
+        assert(n.output_size == output_size)
+
         assert(n.bias == bias)
 
+        assert(n.η == 0.0)
+        assert(n.α == 0.0)
+        assert(n.target == 0)
         assert(n.epochs == 0)
-        assert(n.rate == 0.0)
-        assert(n.weights.shape == (785, 10))
+
+        assert(n.wᵢ.shape == (input_size, hidden_size))
+        assert(n.wⱼ.shape == (hidden_size, output_size))
 
         assert(np.allclose(n.test_data, testdata.test_data_10))
         assert(np.allclose(n.test_labels, testdata.test_labels_10))
@@ -137,15 +151,18 @@ class TestNetwork(unittest.TestCase):
     def test_load(self, np_loadtxt):
         np_loadtxt.return_value = testdata.train_datafile_60
 
-        sizes = [785, 10]
-        bias = 1
+        input_size = 785
+        hidden_size = 20
+        output_size = 10
+        sizes = [input_size, hidden_size, output_size]
+
         filename = "non-existant path"
-        p = nn.Network(sizes=sizes, bias=bias)
+        n = nn.Network(sizes=sizes)
 
-        data, labels = p.load(filename=filename)
+        data, labels = n.load(filename=filename)
 
-        assert (data.shape == (60, 785))
-        assert (labels.shape == (60, ))
+        assert(data.shape == (60, 785))
+        assert(labels.shape == (60, ))
 
         assert(np.allclose(data, testdata.train_data_60))
         assert(np.allclose(labels, testdata.train_labels_60))
