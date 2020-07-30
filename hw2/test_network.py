@@ -81,25 +81,34 @@ class TestNetwork(unittest.TestCase):
         # conf_maxtrix_str = np.array_repr(conf_matrix, max_line_width=None, precision=0).replace('\n', '').replace(' ','').replace('],', '],\n')
 
     def test__init__nofileload(self):
-        sizes = [785, 10]
+        input_size = 785
+        hidden_size = 20
+        output_size = 10
+        sizes = [input_size, hidden_size, output_size]
         bias = 1
 
         n = nn.Network(sizes=sizes, bias=bias)
 
-        assert(n.layers == 2)
+        assert(n.layers == 3)
         assert(n.sizes == sizes)
-        assert(n.input_size == 785)
-        assert(n.output_size == 10)
+        assert(n.input_size == input_size)
+        assert(n.hidden_size == hidden_size)
+        assert(n.output_size == output_size)
 
         assert(n.bias == bias)
+
+        assert(n.η == 0.0)
+        assert(n.α == 0.0)
+        assert(n.target == 0)
         assert(n.epochs == 0)
-        assert(n.rate == 0.0)
-        assert(n.weights.shape == (785, 10))
+
+        assert(n.wᵢ.shape == (input_size, hidden_size))
+        assert(n.wⱼ.shape == (hidden_size, output_size))
 
         assert(n.train_data is None)
-        assert(n.train_data is None)
-        assert(n.train_data is None)
-        assert(n.train_data is None)
+        assert(n.train_labels is None)
+        assert(n.test_data is None)
+        assert(n.test_labels is None)
 
     @mock.patch('numpy.loadtxt')
     def test__init__with_fileload(self, np_loadtxt):

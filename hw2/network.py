@@ -49,14 +49,14 @@ class Network:
 
     # Data and Labels for Training and Testing
     # TODO: Change 785 to 784?
-    test_data: NDArray[Any, 785]
+    test_data: NDArray[Any, Any]
     test_labels: NDArray[Any]
-    train_data: NDArray[Any, 785]
+    train_data: NDArray[Any, Any]
     train_labels: NDArray[Any]
 
     # Weight vectors for the input and hidden layers
-    wᵢ = NDArray[785, 10]
-    wⱼ = NDArray[785, 10]
+    wᵢ = NDArray[Any, Any]
+    wⱼ = NDArray[Any, Any]
 
     def __init__(self, sizes: List[int], train_filename=None, test_filename=None, bias=1):
         """ Constructor for Perceptron
@@ -103,8 +103,8 @@ class Network:
         # The weight matrix is ultimately the output of this Perceptron
         # (specifically the train() function)
         # It is a model by which we can recognize digits
-        self.wᵢ = NDArray[785, 10]
-        self.wⱼ = NDArray[785, 10]
+        self.wᵢ = NDArray[self.input_size, self.hidden_size]
+        self.wⱼ = NDArray[self.hidden_size, self.output_size]
 
     def load(self, filename: str) -> (NDArray[Any, 785], NDArray[Any]):
         """ Load in mnist data set
