@@ -7,6 +7,8 @@
 # Vectorization Libraries
 import numpy as np
 import pandas as pd
+# TODO: USE YOUR OWN SIGMOID
+from scipy.special import expit as sigmoid
 
 # Reporting and Metrics Libraries
 from sklearn.metrics import *
@@ -72,7 +74,7 @@ class Network:
         self.layers = len(sizes)
         self.sizes = sizes
         self.input_size = sizes[0]
-        self.hidden_size = sizes[1]     # TODO: There could be multiple hidden layers
+        self.hidden_size = sizes[1]
         self.output_size = sizes[len(sizes) - 1]
 
         self.bias = bias
@@ -86,12 +88,14 @@ class Network:
 
         # Load the training samples
         # TODO: Wrap the data and labels in a set
+        # TODO: Do this checking in the load function
         if train_filename is None:
             self.train_data = None
             self.train_labels = None
         else:
             self.train_data, self.train_labels = self.load(train_filename)
 
+        # TODO: Do this checking in the load function
         if test_filename is None:
             self.test_data = None
             self.test_labels = None
@@ -103,8 +107,10 @@ class Network:
         # The weight matrix is ultimately the output of this Perceptron
         # (specifically the train() function)
         # It is a model by which we can recognize digits
+        # TODO: for consistency, input_size should be 784 pixels + 1 bias
         self.wᵢ = NDArray[self.input_size, self.hidden_size]
-        self.wⱼ = NDArray[self.hidden_size, self.output_size]
+        # hidden size + 1 bias
+        self.wⱼ = NDArray[self.hidden_size + 1, self.output_size]
 
     def load(self, filename: str) -> (NDArray[Any, 785], NDArray[Any]):
         """ Load in mnist data set
@@ -128,7 +134,9 @@ class Network:
         # TODO: I wanna wrap this into a single object
         return dataset, data_labels
 
-    def forward(self, xᴷ: NDArray[785]) ->  NDArray[10]:
+    # def forward(self, xᴷ: NDArray[785]) -> NDArray[10]:
+    #                           input            hidden           hidden         output
+    def forward(self, xᵢ: NDArray[int], hⱼ: NDArray[int]) -> (NDArray[int], NDArray[int]):
         """ Feed Forward
         For a single image vector of pixels, calculate the dot product
         to activate the next (forward) layer of neurons.
@@ -138,9 +146,14 @@ class Network:
         """
 
         # Remember the bias in included in the first column of every row: self.weights[x][0]
-        activation_vector = np.dot(xᴷ, self.weights)
+        #activation_vector = np.dot(xᴷ, self.weights)
+        #return activation_vector
 
-        return activation_vector
+        # [1:] means index 1 to the end (don't change index 0 - bias)
+        hⱼ[1:] = sigmoid(xᵢ.dot(self.wᵢ))
+        oₖ = sigmoid(hⱼ.dot(self.wⱼ))
+
+        return hⱼ, oₖ
 
     def back(self, k: int, xᴷ: NDArray[785], yᴷ: NDArray[10], η: float) -> NDArray[785, 10]:
         """ Back Propagation
@@ -202,7 +215,7 @@ class Network:
 
         return self.weights
 
-    def learn(self, η: float) -> NDArray[785, 10]:
+    def learn(self, η: float, hⱼ: NDArray[int]) -> NDArray[785, 10]:
         """ The Perceptron Learning Algorithm
         Iterate thru all training examples, feeding the outputs forward and back propagating the
         updated weights. This function tries to exactly model the algorithm as it is described
@@ -226,10 +239,10 @@ class Network:
         for k in range(0, M):
 
             # Get xᴷ, the next input training example (image vector of 784 pixels + 1 bias)
-            xᴷ = self.train_data[k]
+            xᵢ = self.train_data[k]
 
             # Get yᴷ, the output vector by applying the weights to xᴷ and feeding that forward to the next layer
-            yᴷ = self.forward(xᴷ)
+            hⱼ = self.forward(xᵢ)
 
             # Update the weights using the Perceptron training Algorithm and propagate them back
             self.weights = self.back(k, xᴷ, yᴷ, η)
@@ -292,7 +305,8 @@ class Network:
 
         return conf_matrix
 
-    def train(self, rate: float, epochs=50, initial_weight_low=-.05, initial_weight_high=.05) -> (NDArray[785, 10], float):
+    # TODO: Get rid of hardcoded hint values -> (NDArray[785, 10]
+    def train(self, η: float, epochs=50, initial_weight_low=-.05, initial_weight_high=.05) -> (NDArray[785, 10], float):
         """ Perceptron Network Training
         Train 10 perceptrons to recognize handwritten digits
         Reports the accuracy and a confusion matrix
@@ -309,25 +323,30 @@ class Network:
             float                   The testing accuracy score
         """
 
-        # Initialize weight matrix with random values
-        self.weights = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(self.input_size, self.output_size))
+        # TODO: Make passing this in as optional (for testing)
+        # Initialize weight matrices with random values
+        self.wᵢ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(self.input_size, self.hidden_size))
+        self.wⱼ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(self.hidden_size, self.output_size))
+
+        # Initialize hidden layer
+        hⱼ = np.ones(self.hidden_size + 1)
 
         train_epoch_accuracy = []
         test_epoch_accuracy = []
 
         for epoch in range(0, epochs + 1):
-            # Evaluate the perceptron network's training accuracy
+            # Evaluate the network's training accuracy
             train_accuracy, _ = self.evaluate(self.train_data, self.train_labels)
             train_epoch_accuracy.append(train_accuracy)
             print(f"Epoch {epoch}:\tTraining Accuracy: {train_accuracy:.1%}")
 
-            # Evaluate how well the perceptron network generalizes to non-training test data
+            # Evaluate how well the network generalizes to non-training test data
             test_accuracy, _ = self.evaluate(self.test_data, self.test_labels)
             test_epoch_accuracy.append(test_accuracy)
             print(f"\t\t\tTesting Accuracy:  {test_accuracy:.1%}")
 
             # Learn the weights based on the rate
-            self.weights = self.learn(rate)
+            self.weights = self.learn(η, hⱼ)
 
         # Evaluate Perceptron Network on Test Data
         test_accuracy, test_predictions = self.evaluate(self.test_data, self.test_labels)
