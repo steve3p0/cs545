@@ -315,7 +315,8 @@ class Network:
             # Feed an image example forward to get a prediction vector
 
             # def forward(self, xᵢ: NDArray[int], hⱼ: NDArray[int]) -> (NDArray[int], NDArray[int]):
-            prediction_vector = self.forward(xᵢ=dataset[i, :], hⱼ=hⱼ)
+            # hⱼ, oₖ = self.forward(xᵢ=xᵢ, hⱼ=hⱼ)
+            _, prediction_vector = self.forward(xᵢ=dataset[i, :], hⱼ=hⱼ)
 
             # Add the prediction vector to the list of predictions
             prediction.append(np.argmax(prediction_vector))
@@ -360,7 +361,7 @@ class Network:
         return conf_matrix
 
     # TODO: Get rid of hardcoded hint values -> (NDArray[785, 10]
-    def train(self, η: float, target: float, epochs=50, initial_weight_low=-.05, initial_weight_high=.05) -> (NDArray[785, 10], float):
+    def train(self, η: float, α:float, target: float, epochs=50, initial_weight_low=-.05, initial_weight_high=.05) -> (NDArray[Any, Any], NDArray[Any, Any], float):
         """ Perceptron Network Training
         Train 10 perceptrons to recognize handwritten digits
         Reports the accuracy and a confusion matrix
@@ -376,6 +377,9 @@ class Network:
             NDArray[785, 10]        Perceptron model in the form of weights in a 785 x 10 matrix
             float                   The testing accuracy score
         """
+        # Set the rate and the momentum
+        self.η = η
+        self.α = α
 
         # TODO: Make passing this in as optional (for testing)
         # Initialize weight matrices with random values

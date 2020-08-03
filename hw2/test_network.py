@@ -193,6 +193,8 @@ class TestNetwork(unittest.TestCase):
         # TO DO:
         # YOU NEED TO MOCK A LOT OF THIS SHIT
 
+        rate = 0.1
+        momentum = 0.9
         target = 0.9
         initial_weight_low = -0.05
         initial_weight_high = 0.05
@@ -202,6 +204,9 @@ class TestNetwork(unittest.TestCase):
         output_size = 10
         sizes = [input_size, hidden_size, output_size]
         n = nn.Network(sizes=sizes)
+
+        n.η = rate
+        n.α = momentum
 
         n.wᵢ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(input_size, hidden_size))
         n.wⱼ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(hidden_size + 1, output_size))
@@ -248,12 +253,12 @@ class TestNetwork(unittest.TestCase):
 
 
         # self.back(xᵢ=xᵢ[k, :], hⱼ=hⱼ, δⱼ=δⱼ, δₖ=δₖ)
-        n.back(xᵢ=xᵢ, hⱼ=hⱼ, δⱼ=δₖ, δₖ=δⱼ)
+        n.back(xᵢ=xᵢ, hⱼ=hⱼ, δⱼ=δⱼ, δₖ=δₖ)
 
         # Test Shape of weights from input to hidden
         assert(n.wᵢ.shape == (input_size, hidden_size))
         # Test Shape of weights from hidden to output
-        assert(n.wⱼ.shape == (hidden_size, output_size))
+        assert(n.wⱼ.shape == (hidden_size + 1, output_size))
 
     def test_learn(self):
 
@@ -346,6 +351,7 @@ class TestNetwork(unittest.TestCase):
     def test_train(self):
 
         rate = 0.1
+        momentum = 0.9
         target = 0.9
         epochs = 3
 
@@ -360,7 +366,7 @@ class TestNetwork(unittest.TestCase):
         n.test_labels = testdata.test_labels_10
         n.test_data = testdata.test_data_10
 
-        wᵢ, wⱼ, accuracy = n.train(η=rate, target=target, epochs=epochs)
+        wᵢ, wⱼ, accuracy = n.train(η=rate, α=momentum, target=target, epochs=epochs)
 
         # Test Shape of weights from input to hidden
         assert(wᵢ.shape == (input_size, hidden_size))
