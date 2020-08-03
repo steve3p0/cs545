@@ -82,7 +82,7 @@ class Network:
         # These will be set during training
         self.η = 0.0
         self.α = 0.0
-        self.target = 0.0
+        #self.target = 0.0
         self.epochs = 0
 
         # Load the training samples
@@ -149,8 +149,11 @@ class Network:
         #return activation_vector
 
         # [1:] means index 1 to the end (don't change index 0 - bias)
-        hⱼ[1:] = sigmoid(xᵢ.dot(self.wᵢ))
-        oₖ = sigmoid(hⱼ.dot(self.wⱼ))
+        # hⱼ[1:] = sigmoid(xᵢ.dot(self.wᵢ))
+        hⱼ[1:] = sigmoid(np.dot(xᵢ, self.wᵢ))
+
+        #oₖ = sigmoid(hⱼ.dot(self.wⱼ))
+        oₖ = sigmoid(np.dot(hⱼ, self.wⱼ))
 
         return hⱼ, oₖ
 
@@ -222,7 +225,7 @@ class Network:
     # hⱼ : hid_j
     # δₖ : error_o
     # δⱼ : error_h
-    def back(self, xᵢ, hⱼ, δⱼ, δₖ):
+    def back(self, xᵢ: NDArray[int], hⱼ: NDArray[int], δⱼ: NDArray[int], δₖ: NDArray[int]):
 
         # Comupte delta in first layer
         Δwⱼᵢ = (self.η * np.outer(xᵢ, δⱼ[1:])) + (self.α * self.wᵢ)
@@ -236,7 +239,7 @@ class Network:
         # Update weights in second layer
         self.wⱼ += Δwₖⱼ
 
-    def learn(self, η: float, hⱼ: NDArray[int], tₖ: NDArray[int, int]): # -> NDArray[785, 10]:
+    def learn(self, η: float, hⱼ: NDArray[int], tₖ: NDArray[Any, Any]):
         """ The Perceptron Learning Algorithm
         Iterate thru all training examples, feeding the outputs forward and back propagating the
         updated weights. This function tries to exactly model the algorithm as it is described
@@ -263,18 +266,19 @@ class Network:
             # 1. Propagate the input forward
 
             # Get xᵢ, the next input training example (image vector of 784 pixels + 1 bias)
-            xᵢ = self.train_data[k]
+            # hid_j, out_k = self.__forward(x[i, :], hid_j)
+            xᵢ = self.train_data[k, :]
 
             # Input xᵢ to the network and compute the activation hⱼ of each hidden unit j
             # AND... Compute the activation ok of each output unit k
-            hⱼ, oₖ = self.forward(xᵢ)
+            hⱼ, oₖ = self.forward(xᵢ=xᵢ, hⱼ=hⱼ)
 
             ################################################################
             # 2. Calculate error terms
 
             # For each output unit k, calculate error term δₖ :
             #    δₖ ⟵ oₖ(1 - oₖ)(tₖ - oₖ)
-            label = self.train_labels[k]
+            label = int(self.train_labels[k])
             δₖ = oₖ * (1 - oₖ) * (tₖ[label] - oₖ)
 
             # For each hidden unit j, calculate error term δⱼ :
@@ -379,7 +383,7 @@ class Network:
         self.wⱼ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(self.hidden_size, self.output_size))
 
         # Set the target value t k for output unit k to 0.9 if the input class is the kth class, 0.1 otherwise
-        tₖ = np.ones((self.output_size, self.output_size), float) - self.target
+        tₖ = np.ones((self.output_size, self.output_size), float) - target
 
         # Initialize hidden layer
         hⱼ = np.ones(self.hidden_size + 1)

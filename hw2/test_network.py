@@ -82,15 +82,13 @@ class TestNetwork(unittest.TestCase):
 
     def test__init__nofileload(self):
         layers = 3
+        bias = 1
+
         input_size = 785
         hidden_size = 20
         output_size = 10
         sizes = [input_size, hidden_size, output_size]
-        bias = 1
-
-        expected_hidden_size = hidden_size + 1
-
-        n = nn.Network(sizes=sizes, bias=bias)
+        n = nn.Network(sizes=sizes)
 
         assert(n.layers == layers)
         assert(n.sizes == sizes)
@@ -102,7 +100,6 @@ class TestNetwork(unittest.TestCase):
 
         assert(n.η == 0.0)
         assert(n.α == 0.0)
-        assert(n.target == 0)
         assert(n.epochs == 0)
 
         assert(n.wᵢ.shape == (input_size, hidden_size))
@@ -126,7 +123,7 @@ class TestNetwork(unittest.TestCase):
         sizes = [input_size, hidden_size, output_size]
         bias = 1
 
-        n = nn.Network(sizes=sizes, train_filename=train_file, test_filename=test_file, bias=bias)
+        n = nn.Network(sizes=sizes, train_filename=train_file, test_filename=test_file)
 
         assert(n.layers == layers)
         assert(n.sizes == sizes)
@@ -138,7 +135,6 @@ class TestNetwork(unittest.TestCase):
 
         assert(n.η == 0.0)
         assert(n.α == 0.0)
-        assert(n.target == 0)
         assert(n.epochs == 0)
 
         assert(n.wᵢ.shape == (input_size, hidden_size))
@@ -178,15 +174,14 @@ class TestNetwork(unittest.TestCase):
         hidden_size = 20
         output_size = 10
         sizes = [input_size, hidden_size, output_size]
-
         n = nn.Network(sizes=sizes)
 
         # TODO: hardcode these instead of randomizing - so that we can test expected output
         n.wᵢ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(input_size, hidden_size))
         n.wⱼ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(hidden_size + 1, output_size))
 
-        hⱼ = np.ones(hidden_size + 1)
         xᵢ = testdata.train_data_60[0]
+        hⱼ = np.ones(hidden_size + 1)
 
         # TODO: What are you doing with hⱼ_out?
         hⱼ_out, oₖ = n.forward(xᵢ, hⱼ)
@@ -194,47 +189,120 @@ class TestNetwork(unittest.TestCase):
         # TODO: Test specific values of oₖ
 
     def test_back(self):
-        bias = 1
+
+        # TO DO:
+        # YOU NEED TO MOCK A LOT OF THIS SHIT
+
+        target = 0.9
         initial_weight_low = -0.05
         initial_weight_high = 0.05
-        n = nn.Network(sizes=[785, 10], bias=bias)
 
-        n.weights = np.random.uniform(low=initial_weight_low, high=initial_weight_high,
-                                         size=(n.input_size, n.output_size))
+        input_size = 785
+        hidden_size = 20
+        output_size = 10
+        sizes = [input_size, hidden_size, output_size]
+        n = nn.Network(sizes=sizes)
+
+        n.wᵢ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(input_size, hidden_size))
+        n.wⱼ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(hidden_size + 1, output_size))
+
         n.train_labels = testdata.train_labels_60
 
         k = 0
-        xᴷ = testdata.train_data_60[k]
-        yᴷ = n.forward(xᴷ)
-        η  = 0.1
-        weights = n.back(k, xᴷ, yᴷ, η=η)
+        xᵢ = testdata.train_data_60[k]
+        hⱼ = np.ones(hidden_size + 1)
 
-        assert (weights.shape == (785, 10))
+        # yᴷ = n.forward(xᵢ=xᵢ, hⱼ=hⱼ)
+
+        # TODO: MOCK THIS!!!
+        hⱼ, oₖ = n.forward(xᵢ=xᵢ, hⱼ=hⱼ)
+
+
+        # Set the target value t k for output unit k to 0.9 if the input class is the kth class, 0.1 otherwise
+        tₖ = np.ones((output_size, output_size), float) - target
+
+        # TODO: MOCK THIS!!!
+        ################################################################
+        # 2. Calculate error terms
+
+        # For each output unit k, calculate error term δₖ :
+        #    δₖ ⟵ oₖ(1 - oₖ)(tₖ - oₖ)
+        # TODO: Make sure train labels are ints?
+        label = int(n.train_labels[0])  # YOU PICKED THE ZERO index (first training label)
+        δₖ = oₖ * (1 - oₖ) * (tₖ[label] - oₖ)
+
+        # For each hidden unit j, calculate error term δⱼ :
+        #    δⱼ ⟵ hⱼ(1 - hⱼ)(   ∑    wₖⱼ δₖ)
+        #                   ᵏ ∊ ᵒᵘᵗᵖᵘᵗˢ
+        δⱼ = hⱼ * (1 - hⱼ) * (np.dot(n.wⱼ, δₖ))
+
+        # η  = 0.1
+        # self.weights = self.back(k, xᴷ, yᴷ, η)
+        #
+        # Back propagate
+        # xᵢ[k, :]   : x[i, :] (train pixel inputs)
+        # hⱼ : hid_j
+        # δₖ : error_o
+        # δⱼ : error_h
+        # def back(self, xᵢ: NDArray[int], hⱼ: NDArray[int], δⱼ: NDArray[int], δₖ: NDArray[int]):
+
+
+        # self.back(xᵢ=xᵢ[k, :], hⱼ=hⱼ, δⱼ=δⱼ, δₖ=δₖ)
+        n.back(xᵢ=xᵢ, hⱼ=hⱼ, δⱼ=δₖ, δₖ=δⱼ)
+
+        # Test Shape of weights from input to hidden
+        assert(n.wᵢ.shape == (input_size, hidden_size))
+        # Test Shape of weights from hidden to output
+        assert(n.wⱼ.shape == (hidden_size, output_size))
 
     def test_learn(self):
-        bias = 1
+
+        rate = 0.1
+        target = 0.9
         initial_weight_low = -0.05
         initial_weight_high = 0.05
-        rate = 0.1
 
-        n = nn.Network(sizes=[785, 10], bias=bias)
+        input_size = 785
+        hidden_size = 20
+        output_size = 10
+        sizes = [input_size, hidden_size, output_size]
+        n = nn.Network(sizes=sizes)
 
         n.train_labels = testdata.train_labels_60
         n.train_data = testdata.train_data_60
 
-        n.weights = np.random.uniform(low=initial_weight_low, high=initial_weight_high,
-                                         size=(n.input_size, n.output_size))
+        n.wᵢ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(input_size, hidden_size))
+        n.wⱼ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(hidden_size + 1, output_size))
 
-        n.weights = n.learn(rate)
+        hⱼ = np.ones(hidden_size + 1)
+        tₖ = np.ones((output_size, output_size), float) - target
 
-        assert(n.weights.shape == (785, 10))
+        # def learn(self, η: float, hⱼ: NDArray[int], tₖ: NDArray[Any, Any]):
+        n.learn(η=rate, hⱼ=hⱼ, tₖ=tₖ)
+
+        # Test Shape of weights from input to hidden
+        assert(n.wᵢ.shape == (input_size, hidden_size))
+        # Test Shape of weights from hidden to output
+        # TODO: is the shape of wⱼ : hidden + 1, ....?
+        assert(n.wⱼ.shape == (hidden_size + 1, output_size))
+
 
     def test_evaluate(self):
-        bias = 1
-        n = nn.Network(sizes=[785, 10], bias=bias)
+
+        initial_weight_low = -0.05
+        initial_weight_high = 0.05
+
+        input_size = 785
+        hidden_size = 20
+        output_size = 10
+        sizes = [input_size, hidden_size, output_size]
+        n = nn.Network(sizes=sizes)
+
         n.test_data = testdata.test_data_10
         n.test_labels = testdata.test_labels_10
-        n.weights = testdata.trained_weights
+
+        n.wᵢ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(input_size, hidden_size))
+        n.wⱼ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(hidden_size + 1, output_size))
 
         accuracy, predictions = n.evaluate(dataset=n.test_data, data_labels=n.test_labels)
 
@@ -276,18 +344,28 @@ class TestNetwork(unittest.TestCase):
         assert(np.allclose(conf_matrix, expected_conf_matrix))
 
     def test_train(self):
-        bias = 1
-        epochs = 3
-        rate = 0.1
 
-        n = nn.Network(sizes=[785, 10], bias=bias)
+        rate = 0.1
+        target = 0.9
+        epochs = 3
+
+        input_size = 785
+        hidden_size = 20
+        output_size = 10
+        sizes = [input_size, hidden_size, output_size]
+        n = nn.Network(sizes=sizes)
 
         n.train_labels = testdata.train_labels_60
         n.train_data = testdata.train_data_60
         n.test_labels = testdata.test_labels_10
         n.test_data = testdata.test_data_10
 
-        model, accuracy = n.train(rate=rate, epochs=epochs)
+        wᵢ, wⱼ, accuracy = n.train(η=rate, target=target, epochs=epochs)
 
-        assert (model.shape == (785, 10))
-        assert (accuracy > .40)
+        # Test Shape of weights from input to hidden
+        assert(wᵢ.shape == (input_size, hidden_size))
+        # Test Shape of weights from hidden to output
+        # TODO: is the shape of wⱼ : hidden + 1, ....?
+        assert(wⱼ.shape == (hidden_size + 1, output_size))
+
+        assert(accuracy > .40)
