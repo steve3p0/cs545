@@ -36,7 +36,6 @@ class Network:
     """
 
     # Properties Set During Compile Time
-    weights: NDArray[785, 10]   # TODO: Change 785 to 784?
     layers: int
     input_size: int
     hidden_size: int
@@ -155,7 +154,7 @@ class Network:
 
         return hⱼ, oₖ
 
-    def back(self, k: int, xᴷ: NDArray[785], yᴷ: NDArray[10], η: float) -> NDArray[785, 10]:
+    def _old_back(self, k: int, xᴷ: NDArray[785], yᴷ: NDArray[10], η: float) -> NDArray[785, 10]:
         """ Back Propagation
         Update the weights by minimizing the cost that the weights will produce with the next sample
         This is according to the Perceptron Slide deck on page 34-35:
@@ -215,7 +214,29 @@ class Network:
 
         return self.weights
 
-    def learn(self, η: float, hⱼ: NDArray[int]) -> NDArray[785, 10]:
+
+    # self.weights = self.back(k, xᴷ, yᴷ, η)
+    #
+    # Back propagate
+    # xᵢ[k, :]   : x[i, :] (train pixel inputs)
+    # hⱼ : hid_j
+    # δₖ : error_o
+    # δⱼ : error_h
+    def back(self, xᵢ, hⱼ, δⱼ, δₖ):
+
+        # Comupte delta in first layer
+        Δwⱼᵢ = (self.η * np.outer(xᵢ, δⱼ[1:])) + (self.α * self.wᵢ)
+
+        # Update weights in first layer
+        self.wᵢ += Δwⱼᵢ
+
+        # Compute delta in second layer
+        Δwₖⱼ = (self.η * np.outer(hⱼ, δₖ)) + (self.α * self.wⱼ)
+
+        # Update weights in second layer
+        self.wⱼ += Δwₖⱼ
+
+    def learn(self, η: float, hⱼ: NDArray[int], tₖ: NDArray[int, int]): # -> NDArray[785, 10]:
         """ The Perceptron Learning Algorithm
         Iterate thru all training examples, feeding the outputs forward and back propagating the
         updated weights. This function tries to exactly model the algorithm as it is described
@@ -238,16 +259,41 @@ class Network:
         M = len(self.train_labels)
         for k in range(0, M):
 
-            # Get xᴷ, the next input training example (image vector of 784 pixels + 1 bias)
+            ################################################################
+            # 1. Propagate the input forward
+
+            # Get xᵢ, the next input training example (image vector of 784 pixels + 1 bias)
             xᵢ = self.train_data[k]
 
-            # Get yᴷ, the output vector by applying the weights to xᴷ and feeding that forward to the next layer
-            hⱼ = self.forward(xᵢ)
+            # Input xᵢ to the network and compute the activation hⱼ of each hidden unit j
+            # AND... Compute the activation ok of each output unit k
+            hⱼ, oₖ = self.forward(xᵢ)
 
-            # Update the weights using the Perceptron training Algorithm and propagate them back
-            self.weights = self.back(k, xᴷ, yᴷ, η)
+            ################################################################
+            # 2. Calculate error terms
 
-        return self.weights
+            # For each output unit k, calculate error term δₖ :
+            #    δₖ ⟵ oₖ(1 - oₖ)(tₖ - oₖ)
+            label = self.train_labels[k]
+            δₖ = oₖ * (1 - oₖ) * (tₖ[label] - oₖ)
+
+            # For each hidden unit j, calculate error term δⱼ :
+            #    δⱼ ⟵ hⱼ(1 - hⱼ)(   ∑    wₖⱼ δₖ)
+            #                   ᵏ ∊ ᵒᵘᵗᵖᵘᵗˢ
+            δⱼ = hⱼ * (1 - hⱼ) * (np.dot(self.wⱼ, δₖ))
+
+            ################################################################
+            # 3. Update weights
+
+            # Back propagate
+            # xᵢ[k, :]   : x[i, :] (train pixel inputs)
+            # hⱼ : hid_j
+            # δₖ : error_o
+            # δⱼ : error_h
+
+            self.back(xᵢ=xᵢ, hⱼ=hⱼ, δⱼ=δⱼ, δₖ=δₖ)
+
+        #return self.wᵢ, self.wⱼ
 
     def evaluate(self, dataset: NDArray[785], data_labels: NDArray[int]) -> (float, NDArray[int]):
         """ Evaulate Accuracy
@@ -258,10 +304,14 @@ class Network:
             data_labels:    true target output
         """
 
+        hⱼ = np.ones(self.hidden_size + 1)
+
         prediction = []
         for i in range(0, len(data_labels)):
             # Feed an image example forward to get a prediction vector
-            prediction_vector = self.forward(dataset[i, :])
+
+            # def forward(self, xᵢ: NDArray[int], hⱼ: NDArray[int]) -> (NDArray[int], NDArray[int]):
+            prediction_vector = self.forward(xᵢ=dataset[i, :], hⱼ=hⱼ)
 
             # Add the prediction vector to the list of predictions
             prediction.append(np.argmax(prediction_vector))
@@ -306,7 +356,7 @@ class Network:
         return conf_matrix
 
     # TODO: Get rid of hardcoded hint values -> (NDArray[785, 10]
-    def train(self, η: float, epochs=50, initial_weight_low=-.05, initial_weight_high=.05) -> (NDArray[785, 10], float):
+    def train(self, η: float, target: float, epochs=50, initial_weight_low=-.05, initial_weight_high=.05) -> (NDArray[785, 10], float):
         """ Perceptron Network Training
         Train 10 perceptrons to recognize handwritten digits
         Reports the accuracy and a confusion matrix
@@ -328,6 +378,9 @@ class Network:
         self.wᵢ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(self.input_size, self.hidden_size))
         self.wⱼ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(self.hidden_size, self.output_size))
 
+        # Set the target value t k for output unit k to 0.9 if the input class is the kth class, 0.1 otherwise
+        tₖ = np.ones((self.output_size, self.output_size), float) - self.target
+
         # Initialize hidden layer
         hⱼ = np.ones(self.hidden_size + 1)
 
@@ -346,17 +399,23 @@ class Network:
             print(f"\t\t\tTesting Accuracy:  {test_accuracy:.1%}")
 
             # Learn the weights based on the rate
-            self.weights = self.learn(η, hⱼ)
+            # learn(self, η: float, hⱼ: NDArray[int], tₖ: NDArray[int, int])
+            self.learn(η=η, hⱼ=hⱼ, tₖ=tₖ)
+            #self.learn(η, hⱼ)
 
         # Evaluate Perceptron Network on Test Data
         test_accuracy, test_predictions = self.evaluate(self.test_data, self.test_labels)
 
         # Report Accuracy and Confusion Matrix
-        conf_matrix = self.report(rate, test_predictions, test_accuracy, train_epoch_accuracy, test_epoch_accuracy)
+        #     def report(self, rate: float, prediction: List[int], test_accuracy: float,
+        #                      train_epoch_accuracy: List[float], test_epoch_accuracy: List[float]) -> NDArray[10, 10]:
+        conf_matrix = self.report(rate=η, test_predictions=test_predictions, test_accuracy=test_accuracy,
+                                          train_epoch_accuracy=train_epoch_accuracy, test_epoch_accuracy=test_epoch_accuracy)
         print(f"\n")
         print(f"Test Accuracy: {test_accuracy:.1%}")
-        print(f"Learning Rate: {np.format_float_positional(rate, trim='-')}%")
+        print(f"Learning Rate: {np.format_float_positional(η, trim='-')}%")
         print(f"Confusion Matrix: ")
         print(conf_matrix)
 
-        return self.weights, test_accuracy
+        # return self.weights, test_accuracy
+        return self.wᵢ, self.wⱼ, test_accuracy
