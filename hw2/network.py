@@ -149,7 +149,7 @@ class Network:
         #return activation_vector
 
         # [1:] means index 1 to the end (don't change index 0 - bias)
-        # hⱼ[1:] = sigmoid(xᵢ.dot(self.wᵢ))
+        #hⱼ[1:] = sigmoid(xᵢ.dot(self.wᵢ))
         hⱼ[1:] = sigmoid(np.dot(xᵢ, self.wᵢ))
 
         #oₖ = sigmoid(hⱼ.dot(self.wⱼ))
@@ -157,7 +157,7 @@ class Network:
 
         return hⱼ, oₖ
 
-    def _old_back(self, k: int, xᴷ: NDArray[785], yᴷ: NDArray[10], η: float) -> NDArray[785, 10]:
+    def back(self, xᵢ: NDArray[int], hⱼ: NDArray[int], δⱼ: NDArray[int], δₖ: NDArray[int]):
         """ Back Propagation
         Update the weights by minimizing the cost that the weights will produce with the next sample
         This is according to the Perceptron Slide deck on page 34-35:
@@ -167,76 +167,26 @@ class Network:
             Δwᵢ = η(tᴷ - yᴷ)xᵢᴷ
 
         Parameters:
-            k       The indexer used in perceptron learning algorithm
-            xᴷ      The input image vector of 784 pixel values (+1 for the bias)
-            yᴷ      The output vector (result of w * x)
-            η       The Learning rate
+            xᵢ      The input image vector of 784 pixel values (+1 for the bias)
+            hⱼ       The hidden layer vector
+            δⱼ       The hidden layer error term
+            δₖ       The output layer error term
 
         Local Variables:
-            t       The next target label (true value of output)
-            tᴷ      Vectorized output layer of target value
-            yᴷ      Modify the output vector using ArgMax to zero out outputs except highest value
-            Δwᵢ     The gradient or vector derivative in order to minimize the cost function
+            Δwⱼᵢ     The difference (delta) in weight from the input layer to the hidden layer
+            Δwₖⱼ      The difference (delta) in weight from the hidden layer to the output layer
         """
 
-        # Get the target label: the true value [0-9] of the training sample image)
-        t = int(self.train_labels[k])
-
-        # Create a target vector of ten elements, light up the correct value t
-        tᴷ = np.insert(np.zeros((1, self.output_size - 1)), t, 1)
-
-        # Create a vector for the predicted value
-        yᴷ = np.insert(np.zeros((1, self.output_size - 1)), np.argmax(yᴷ), 1)
-
-        # Find the gradient of the weights
-        # Δwᵢ= η(tᴷ - yᴷ)xᵢᴷ
-
-        # Δwᵢ = η * np.dot(tᴷ - yᴷ, xᴷ)
-        # Δwᵢ = η * np.dot(xᴷ, (tᴷ - yᴷ))
-        # Δwᵢ = η * np.dot(np.reshape(xᴷ, (self.input_size, 1)), np.reshape(tᴷ - yᴷ, (1, self.output_size)))
-        # Δwᵢ = η * np.dot(np.reshape(tᴷ - yᴷ, (1, self.output_size)), np.reshape(xᴷ, (self.input_size, 1)))
-        Δwᵢ = η * np.dot(np.reshape(xᴷ, (self.input_size, 1)), np.reshape(tᴷ - yᴷ, (1, self.output_size)))
-
-        # what is the problem here?
-        #   xᴷ        ndarray: (785,) [1. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0., 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0., 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0., 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0., 0. 0. 0. 0.]
-        #   tᴷ - yᴷ   ndarray: (10, ) [-0.0019597   0.08868587  0.9632121  -0.01701219 -0.06978089 -0.09443413, -0.2448718  -0.08801273 -0.19624884  0.13512257]
-
-        # So when we fuck with this:
-        #   xᴷ        becomes   np.reshape(xᴷ, (self.input_size, 1))
-        #             {ndarray: (785, 1)} [[1.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.
-        #
-        #   tᴷ - yᴷ  becomes   np.reshape(tᴷ - yᴷ, (1, self.output_size))
-        #            {ndarray: (1, 10)}   [[-0.0019597   0.08868587  0.9632121  -0.01701219 -0.06978089 -0.09443413,  -0.2448718  -0.08801273 -0.19624884  0.13512257]]
-
-        # blash
-        #
-        # [[-1.95969690e-08  8.86858666e-07  9.63212100e-06 -1.70121873e-07,  -6.97808933e-07 -9.44341300e-07 -2.44871796e-06 -8.80127347e-07,  -1.96248841e-06  1.35122575e-06], [ 0.00000000e+00  0.00000000e+00  0.00000000e+00  0.00000000e+00,   0.00000000e+00  0.00
-
-
-        self.weights += Δwᵢ
-
-        return self.weights
-
-
-    # self.weights = self.back(k, xᴷ, yᴷ, η)
-    #
-    # Back propagate
-    # xᵢ[k, :]   : x[i, :] (train pixel inputs)
-    # hⱼ : hid_j
-    # δₖ : error_o
-    # δⱼ : error_h
-    def back(self, xᵢ: NDArray[int], hⱼ: NDArray[int], δⱼ: NDArray[int], δₖ: NDArray[int]):
-
-        # Comupte delta in first layer
+        # Calculate the difference (delta) in weight from the input layer to the hidden layer
         Δwⱼᵢ = (self.η * np.outer(xᵢ, δⱼ[1:])) + (self.α * self.wᵢ)
 
-        # Update weights in first layer
+        # Update the weighs from the input layer to the hidden layer
         self.wᵢ += Δwⱼᵢ
 
-        # Compute delta in second layer
+        # Calculate the difference (delta) in weight from the hidden layer to the output layer
         Δwₖⱼ = (self.η * np.outer(hⱼ, δₖ)) + (self.α * self.wⱼ)
 
-        # Update weights in second layer
+        # Update the weighs from the hidden layer to the output layer
         self.wⱼ += Δwₖⱼ
 
     def learn(self, η: float, hⱼ: NDArray[int], tₖ: NDArray[Any, Any]):
@@ -290,14 +240,7 @@ class Network:
             # 3. Update weights
 
             # Back propagate
-            # xᵢ[k, :]   : x[i, :] (train pixel inputs)
-            # hⱼ : hid_j
-            # δₖ : error_o
-            # δⱼ : error_h
-
             self.back(xᵢ=xᵢ, hⱼ=hⱼ, δⱼ=δⱼ, δₖ=δₖ)
-
-        #return self.wᵢ, self.wⱼ
 
     def evaluate(self, dataset: NDArray[785], data_labels: NDArray[int]) -> (float, NDArray[int]):
         """ Evaulate Accuracy
@@ -384,7 +327,7 @@ class Network:
         # TODO: Make passing this in as optional (for testing)
         # Initialize weight matrices with random values
         self.wᵢ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(self.input_size, self.hidden_size))
-        self.wⱼ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(self.hidden_size, self.output_size))
+        self.wⱼ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(self.hidden_size + 1, self.output_size))
 
         # Set the target value t k for output unit k to 0.9 if the input class is the kth class, 0.1 otherwise
         tₖ = np.ones((self.output_size, self.output_size), float) - target
@@ -417,7 +360,10 @@ class Network:
         # Report Accuracy and Confusion Matrix
         #     def report(self, rate: float, prediction: List[int], test_accuracy: float,
         #                      train_epoch_accuracy: List[float], test_epoch_accuracy: List[float]) -> NDArray[10, 10]:
-        conf_matrix = self.report(rate=η, test_predictions=test_predictions, test_accuracy=test_accuracy,
+
+        # def report(self, rate: float, prediction: List[int], test_accuracy: float,
+        #            train_epoch_accuracy: List[float], test_epoch_accuracy: List[float]) -> NDArray[10, 10]:
+        conf_matrix = self.report(rate=η, prediction=test_predictions, test_accuracy=test_accuracy,
                                           train_epoch_accuracy=train_epoch_accuracy, test_epoch_accuracy=test_epoch_accuracy)
         print(f"\n")
         print(f"Test Accuracy: {test_accuracy:.1%}")
