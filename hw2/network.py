@@ -157,7 +157,7 @@ class Network:
 
         return hⱼ, oₖ
 
-    def back(self, xᵢ: NDArray[int], hⱼ: NDArray[int], δⱼ: NDArray[int], δₖ: NDArray[int]):
+    def back(self, xᵢ: NDArray[float], hⱼ: NDArray[float], δⱼ: NDArray[float], δₖ: NDArray[float]):
         """ Back Propagation
         Update the weights - Need to Save the Deltas!!!
         From last two pages of slide deck "Notes On Implementing NN"

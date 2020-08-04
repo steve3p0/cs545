@@ -1,9 +1,9 @@
 import numpy as np
 import sys
 
-
 BIAS = 1
 INPUT_SIZE = 785
+
 
 def create_test_data(self):
     train_file = 'mnist_validation_10.csv'
