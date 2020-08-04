@@ -134,6 +134,66 @@ class TestNetworkFull(unittest.TestCase):
         # Test accuracy over 90%
         assert(accuracy > .90)
 
+    def test_experiment2_qtr_train(self):
+        """ INTEGRATION TEST fpr Experiment #1 (100 Hidden Nodes)
+
+        ASSUMPTION:
+        That you have the MNIST train and test files in current directory
+        with exact filename below
+        """
+        train_file = 'mnist_train15k.csv'
+        test_file = 'mnist_validation.csv'
+
+        input_size = 785
+        hidden_size = 100
+        output_size = 10
+        sizes = [input_size, hidden_size, output_size]
+        n = nn.Network(sizes=sizes, train_filename=train_file, test_filename=test_file)
+
+        rate = 0.1
+        momentum = 0.9
+        target = 0.9
+        wᵢ, wⱼ, accuracy = n.train(η=rate, α=momentum, target=target)
+
+        # Test Shape of weights from input to hidden
+        assert(wᵢ.shape == (input_size, hidden_size))
+        # Test Shape of weights from hidden to output
+        # TODO: is the shape of wⱼ : hidden + 1, ....?
+        assert(wⱼ.shape == (hidden_size + 1, output_size))
+
+        # Test accuracy over 90%
+        assert(accuracy > .90)
+
+    def test_experiment2_half_train(self):
+        """ INTEGRATION TEST fpr Experiment #1 (100 Hidden Nodes)
+
+        ASSUMPTION:
+        That you have the MNIST train and test files in current directory
+        with exact filename below
+        """
+        train_file = 'mnist_train30k.csv'
+        test_file = 'mnist_validation.csv'
+
+        input_size = 785
+        hidden_size = 100
+        output_size = 10
+        sizes = [input_size, hidden_size, output_size]
+        n = nn.Network(sizes=sizes, train_filename=train_file, test_filename=test_file)
+
+        rate = 0.1
+        momentum = 0.9
+        target = 0.9
+        wᵢ, wⱼ, accuracy = n.train(η=rate, α=momentum, target=target)
+
+        # Test Shape of weights from input to hidden
+        assert(wᵢ.shape == (input_size, hidden_size))
+        # Test Shape of weights from hidden to output
+        # TODO: is the shape of wⱼ : hidden + 1, ....?
+        assert(wⱼ.shape == (hidden_size + 1, output_size))
+
+        # Test accuracy over 90%
+        assert(accuracy > .90)
+
     def test_experiment3_momentum_point25(self):
         """ INTEGRATION TEST fpr Experiment #3 (momentum 0.25
 
