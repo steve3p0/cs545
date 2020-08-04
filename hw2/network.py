@@ -1,5 +1,5 @@
 # CS 545 Machine Learning
-# Winter 2020 Portland State University
+# Summer 2020 Portland State University
 # Professor: Dr. Paul Doliotis
 # Steve Braich
 # HW #2: Neural Network
@@ -24,8 +24,9 @@ from tqdm import tqdm
 
 class Network:
     """
-    This class creates a network of 10 perceptrons to recognize handwritten digits [0-9]
+    This class creates a neural network to recognize handwritten digits [0-9]
 
+    TODO: update from hw1
     Example usage:
         p = Perceptron(sizes=[785, 10], train_filename=file, test_filename=file, bias=1)
 
@@ -49,7 +50,6 @@ class Network:
     epochs: int
 
     # Data and Labels for Training and Testing
-    # TODO: Change 785 to 784?
     test_data: NDArray[Any, Any]
     test_labels: NDArray[Any]
     train_data: NDArray[Any, Any]
@@ -62,7 +62,7 @@ class Network:
     Δwₖⱼ = NDArray[Any, Any]
 
     def __init__(self, sizes: List[int], train_filename=None, test_filename=None, bias=1):
-        """ Constructor for Perceptron
+        """ Constructor for Neural Network
         The constructor for this class does the following:
          (1) Initializes the layers, sizes of each layer, and the bias.
          (2) Loads in the train and test data  (this is optional - you can load it later)
@@ -144,8 +144,6 @@ class Network:
         # TODO: I wanna wrap this into a single object
         return dataset, data_labels
 
-    # def forward(self, xᴷ: NDArray[785]) -> NDArray[10]:
-    #                           input            hidden           hidden         output
     def forward(self, xᵢ: NDArray[int], hⱼ: NDArray[int]) -> (NDArray[int], NDArray[int]):
         """ Feed Forward
         For a single image vector of pixels, calculate the dot product
@@ -154,16 +152,7 @@ class Network:
         The result will be inputs xᴷ of the next layer, hence the
         name forward.
         """
-
-        # Remember the bias in included in the first column of every row: self.weights[x][0]
-        #activation_vector = np.dot(xᴷ, self.weights)
-        #return activation_vector
-
-        # [1:] means index 1 to the end (don't change index 0 - bias)
-        #hⱼ[1:] = sigmoid(xᵢ.dot(self.wᵢ))
         hⱼ[1:] = sigmoid(np.dot(xᵢ, self.wᵢ))
-
-        #oₖ = sigmoid(hⱼ.dot(self.wⱼ))
         oₖ = sigmoid(np.dot(hⱼ, self.wⱼ))
 
         return hⱼ, oₖ
@@ -189,8 +178,7 @@ class Network:
 
         # Update input layer to hidden layer weights
         # Calculate the difference (delta) in weight from the input layer to the hidden layer
-        # Use the delta from the previous iteration
-        #Δwⱼᵢ = (self.η * np.outer(xᵢ, δⱼ[1:])) + (self.α * self.wᵢ)
+        # Use the delta from the previous iteration AND apply the momentum α
         Δwⱼᵢ = (self.η * np.outer(xᵢ, δⱼ[1:])) + (self.α * self.Δwⱼᵢ)
 
         # Update the weighs from the input layer to the hidden layer
@@ -201,8 +189,7 @@ class Network:
 
         # Update hidden layer to output layer weights
         # Calculate the difference (delta) in weight from the hidden layer to the output layer
-        # Use the delta from the previous iteration
-        #Δwₖⱼ = (self.η * np.outer(hⱼ, δₖ)) + (self.α * self.wⱼ)
+        # Use the delta from the previous iteration AND apply the momentum α
         Δwₖⱼ = (self.η * np.outer(hⱼ, δₖ)) + (self.α * self.Δwₖⱼ)
 
         # Update the weighs from the hidden layer to the output layer
@@ -212,18 +199,13 @@ class Network:
         self.Δwₖⱼ = Δwₖⱼ
 
     def learn(self, η: float, hⱼ: NDArray[int], tₖ: NDArray[Any, Any]):
-        """ The Perceptron Learning Algorithm
-        Iterate thru all training examples, feeding the outputs forward and back propagating the
-        updated weights. This function tries to exactly model the algorithm as it is described
-        in this slide on page 35:
-
-        http://web.cecs.pdx.edu/~doliotis/MachineLearningSummer2020/lectures/lecture02/PerceptronsML.pdf
-
-             wᵢ ⟵ wᵢ + Δwᵢ
-            Δwᵢ  = η(tᴷ - yᴷ)xᵢᴷ
+        """ Learn applying stochastic Gradient Decent from pages 38-40:
+        http://web.cecs.pdx.edu/~doliotis/MachineLearningSummer2020/lectures/lecture04/NeuralNetworksML.pdf
 
         Parameters:
             η       The Learning rate
+            hⱼ       The hidden layer
+            tₖ
 
         Local Variables:
             M       M is the total number of training examples
@@ -278,9 +260,6 @@ class Network:
         prediction = []
         for i in range(0, len(data_labels)):
             # Feed an image example forward to get a prediction vector
-
-            # def forward(self, xᵢ: NDArray[int], hⱼ: NDArray[int]) -> (NDArray[int], NDArray[int]):
-            # hⱼ, oₖ = self.forward(xᵢ=xᵢ, hⱼ=hⱼ)
             _, prediction_vector = self.forward(xᵢ=dataset[i, :], hⱼ=hⱼ)
 
             # Add the prediction vector to the list of predictions
@@ -325,22 +304,23 @@ class Network:
 
         return conf_matrix
 
-    # TODO: Get rid of hardcoded hint values -> (NDArray[785, 10]
     def train(self, η: float, α:float, target: float, epochs=50, initial_weight_low=-.05, initial_weight_high=.05) -> (NDArray[Any, Any], NDArray[Any, Any], float):
-        """ Perceptron Network Training
-        Train 10 perceptrons to recognize handwritten digits
+        """ Train a Neural Network to recognize handwritten digits
         Reports the accuracy and a confusion matrix
-        Returns the Perceptron model in the form of weights in a 785 x 10 matrix
+        Returns the Perceptron model in the form of weights
 
         Parameters:
-            rate                    The learning rate
-            epochs                  The total number of training interations to run over all the training samples
-            initial_weight_low      The min range value for the initial randomized weights
-            initial_weight_high     The max range value for the initial randomized weights
+            η                    The learning rate
+            α                    The momentum
+            target               Target value for tₖ
+            epochs               Number of epochs
+            initial_weight_low   The min range value for the initial randomized weights
+            initial_weight_high  The max range value for the initial randomized weights
 
         Return Values:
-            NDArray[785, 10]        Perceptron model in the form of weights in a 785 x 10 matrix
-            float                   The testing accuracy score
+            NDArray[785, 10]     Weights from input layer to hidden layer
+            NDArray[h size, 10]  Weights from hidden layer to output layer
+            float                The testing accuracy score
         """
         # Set the rate and the momentum
         self.η = η
@@ -355,7 +335,9 @@ class Network:
         self.Δwⱼᵢ = np.zeros(self.Δwⱼᵢ.shape)
         self.Δwₖⱼ = np.zeros(self.Δwₖⱼ.shape)
 
-        # Set the target value t k for output unit k to 0.9 if the input class is the kth class, 0.1 otherwise
+        # Set the target value tₖ for output unit k to 0.9 if the input class is the kth class, 0.1 otherwise
+        # specified here in Task:
+        # http://web.cecs.pdx.edu/~doliotis/MachineLearningSummer2020/assignments/assignment02/Assignment02.pdf
         tₖ = np.ones((self.output_size, self.output_size), float) - target
         np.fill_diagonal(tₖ, target)
 
@@ -389,5 +371,4 @@ class Network:
         print(f"Confusion Matrix: ")
         print(conf_matrix)
 
-        # return self.weights, test_accuracy
         return self.wᵢ, self.wⱼ, test_accuracy
