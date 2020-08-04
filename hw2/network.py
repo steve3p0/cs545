@@ -55,9 +55,11 @@ class Network:
     train_data: NDArray[Any, Any]
     train_labels: NDArray[Any]
 
-    # Weight vectors for the input and hidden layers
+    # Weight and Delta Matrices for the input and hidden layers
     wᵢ = NDArray[Any, Any]
     wⱼ = NDArray[Any, Any]
+    Δwⱼᵢ = NDArray[Any, Any]
+    Δwₖⱼ = NDArray[Any, Any]
 
     def __init__(self, sizes: List[int], train_filename=None, test_filename=None, bias=1):
         """ Constructor for Perceptron
@@ -111,6 +113,15 @@ class Network:
         # hidden size + 1 bias
         self.wⱼ = NDArray[self.hidden_size + 1, self.output_size]
 
+        # Initialize Deltas
+        # Need to Save the Deltas!!!
+        # From last two pages of slide deck "Notes On Implementing NN"
+        # http://web.cecs.pdx.edu/~doliotis/MachineLearningSummer2020/lectures/lecture07/NotesOnImplementingNN.pdf
+        # The Delta (chainge) in weight from input layer to hidden layer, from previous iteration
+        self.Δwⱼᵢ = NDArray[self.input_size, self.hidden_size]
+        # The Delta (chainge) in weight from hidden layer to output layer, from previous iteration
+        self.Δwₖⱼ = NDArray[self.hidden_size + 1, self.output_size]
+
     def load(self, filename: str) -> (NDArray[Any, 785], NDArray[Any]):
         """ Load in mnist data set
         The mnist data set file structure is as followings:
@@ -159,12 +170,11 @@ class Network:
 
     def back(self, xᵢ: NDArray[int], hⱼ: NDArray[int], δⱼ: NDArray[int], δₖ: NDArray[int]):
         """ Back Propagation
-        Update the weights by minimizing the cost that the weights will produce with the next sample
-        This is according to the Perceptron Slide deck on page 34-35:
-        http://web.cecs.pdx.edu/~doliotis/MachineLearningSummer2020/lectures/lecture02/PerceptronsML.pdf
+        Update the weights - Need to Save the Deltas!!!
+        From last two pages of slide deck "Notes On Implementing NN"
+        http://web.cecs.pdx.edu/~doliotis/MachineLearningSummer2020/lectures/lecture07/NotesOnImplementingNN.pdf
 
-             wᵢ ⟵ wᵢ + Δwᵢ
-            Δwᵢ = η(tᴷ - yᴷ)xᵢᴷ
+            Δwⱼ,ᵢ = ηδⱼxᵢ + αΔw'ⱼ,ᵢ     where Δw'ⱼ,ᵢ is the change to this weight from previous iteration
 
         Parameters:
             xᵢ      The input image vector of 784 pixel values (+1 for the bias)
@@ -177,17 +187,29 @@ class Network:
             Δwₖⱼ      The difference (delta) in weight from the hidden layer to the output layer
         """
 
+        # Update input layer to hidden layer weights
         # Calculate the difference (delta) in weight from the input layer to the hidden layer
-        Δwⱼᵢ = (self.η * np.outer(xᵢ, δⱼ[1:])) + (self.α * self.wᵢ)
+        # Use the delta from the previous iteration
+        #Δwⱼᵢ = (self.η * np.outer(xᵢ, δⱼ[1:])) + (self.α * self.wᵢ)
+        Δwⱼᵢ = (self.η * np.outer(xᵢ, δⱼ[1:])) + (self.α * self.Δwⱼᵢ)
 
         # Update the weighs from the input layer to the hidden layer
         self.wᵢ += Δwⱼᵢ
 
+        # Need to save the delta for the next iteration
+        self.Δwⱼᵢ = Δwⱼᵢ
+
+        # Update hidden layer to output layer weights
         # Calculate the difference (delta) in weight from the hidden layer to the output layer
-        Δwₖⱼ = (self.η * np.outer(hⱼ, δₖ)) + (self.α * self.wⱼ)
+        # Use the delta from the previous iteration
+        #Δwₖⱼ = (self.η * np.outer(hⱼ, δₖ)) + (self.α * self.wⱼ)
+        Δwₖⱼ = (self.η * np.outer(hⱼ, δₖ)) + (self.α * self.Δwₖⱼ)
 
         # Update the weighs from the hidden layer to the output layer
         self.wⱼ += Δwₖⱼ
+
+        # Need to save the delta for the next iteration
+        self.Δwₖⱼ = Δwₖⱼ
 
     def learn(self, η: float, hⱼ: NDArray[int], tₖ: NDArray[Any, Any]):
         """ The Perceptron Learning Algorithm
@@ -329,8 +351,13 @@ class Network:
         self.wᵢ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(self.input_size, self.hidden_size))
         self.wⱼ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(self.hidden_size + 1, self.output_size))
 
+        # Initialize weight delta matrices with zeros
+        self.Δwⱼᵢ = np.zeros(self.Δwⱼᵢ.shape)
+        self.Δwₖⱼ = np.zeros(self.Δwₖⱼ.shape)
+
         # Set the target value t k for output unit k to 0.9 if the input class is the kth class, 0.1 otherwise
         tₖ = np.ones((self.output_size, self.output_size), float) - target
+        np.fill_diagonal(tₖ, target)
 
         # Initialize hidden layer
         hⱼ = np.ones(self.hidden_size + 1)
@@ -350,19 +377,10 @@ class Network:
             print(f"\t\t\tTesting Accuracy:  {test_accuracy:.1%}")
 
             # Learn the weights based on the rate
-            # learn(self, η: float, hⱼ: NDArray[int], tₖ: NDArray[int, int])
             self.learn(η=η, hⱼ=hⱼ, tₖ=tₖ)
-            #self.learn(η, hⱼ)
 
         # Evaluate Perceptron Network on Test Data
         test_accuracy, test_predictions = self.evaluate(self.test_data, self.test_labels)
-
-        # Report Accuracy and Confusion Matrix
-        #     def report(self, rate: float, prediction: List[int], test_accuracy: float,
-        #                      train_epoch_accuracy: List[float], test_epoch_accuracy: List[float]) -> NDArray[10, 10]:
-
-        # def report(self, rate: float, prediction: List[int], test_accuracy: float,
-        #            train_epoch_accuracy: List[float], test_epoch_accuracy: List[float]) -> NDArray[10, 10]:
         conf_matrix = self.report(rate=η, prediction=test_predictions, test_accuracy=test_accuracy,
                                           train_epoch_accuracy=train_epoch_accuracy, test_epoch_accuracy=test_epoch_accuracy)
         print(f"\n")
