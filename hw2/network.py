@@ -301,8 +301,7 @@ class Network:
 
         return accuracy, prediction
 
-    def report(self, rate: float, prediction: List[int], test_accuracy: float,
-               train_epoch_accuracy: List[float], test_epoch_accuracy: List[float]) -> NDArray[10, 10]:
+    def report(self, rate: float, prediction: List[int], train_epoch_accuracy: List[float], test_epoch_accuracy: List[float]) -> NDArray[10, 10]:
         """ Report results from training
         Display a confusion matrix and plot the accuracy
 
@@ -335,8 +334,7 @@ class Network:
 
         return conf_matrix
 
-    # def train(self, η: float=0.1, α: float=1, target: float=0.9, epochs: int=50, initial_weight: float=.05) -> (NDArray[Any, Any], NDArray[Any, Any], float):
-    def train(self, η: float=0.1, α: float=1.0, target: float=0.9, epochs: int=50, initial_weight: float=0.05) -> (NDArray[Any, Any], NDArray[Any, Any], float):
+    def train(self, η: float=0.1, α: float=0.9, target: float=0.9, epochs: int=50, initial_weight: float=0.05) -> (NDArray[Any, Any], NDArray[Any, Any], float):
         """ Train a Neural Network to recognize handwritten digits
         Reports the accuracy and a confusion matrix
         Returns the Perceptron model in the form of weights
@@ -397,9 +395,7 @@ class Network:
 
         # Evaluate Perceptron Network on Test Data
         test_accuracy, test_predictions = self.evaluate(self.test_data, self.test_labels)
-        conf_matrix = self.report(rate=η, prediction=test_predictions, test_accuracy=test_accuracy,
-                                  train_epoch_accuracy=train_epoch_accuracy, test_epoch_accuracy=test_epoch_accuracy)
-        print(f"\n")
+        conf_matrix = self.report(rate=η, prediction=test_predictions, train_epoch_accuracy=train_epoch_accuracy, test_epoch_accuracy=test_epoch_accuracy)
         print(f"Test Accuracy: {test_accuracy:.1%}")
         print(f"Learning Rate: {np.format_float_positional(η, trim='-')}%")
         print(f"Confusion Matrix: ")
