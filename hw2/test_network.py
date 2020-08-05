@@ -30,7 +30,7 @@ class TestNetworkExperiements(unittest.TestCase):
         n = nn.Network(sizes=sizes, train_filename=train_file, test_filename=test_file)
 
         rate = 0.1
-        momentum = 0.9
+        momentum = 1
         target = 0.9
         wᵢ, wⱼ, accuracy = n.train(η=rate, α=momentum, target=target)
 
@@ -60,7 +60,7 @@ class TestNetworkExperiements(unittest.TestCase):
         n = nn.Network(sizes=sizes, train_filename=train_file, test_filename=test_file)
 
         rate = 0.1
-        momentum = 0.9
+        momentum = 1
         target = 0.9
         wᵢ, wⱼ, accuracy = n.train(η=rate, α=momentum, target=target)
 
@@ -90,7 +90,7 @@ class TestNetworkExperiements(unittest.TestCase):
         n = nn.Network(sizes=sizes, train_filename=train_file, test_filename=test_file)
 
         rate = 0.1
-        momentum = 0.9
+        momentum = 1
         target = 0.9
         wᵢ, wⱼ, accuracy = n.train(η=rate, α=momentum, target=target)
 
@@ -120,7 +120,7 @@ class TestNetworkExperiements(unittest.TestCase):
         n = nn.Network(sizes=sizes, train_filename=train_file, test_filename=test_file)
 
         rate = 0.1
-        momentum = 0.9
+        momentum = 1
         target = 0.9
         wᵢ, wⱼ, accuracy = n.train(η=rate, α=momentum, target=target)
 
@@ -150,7 +150,7 @@ class TestNetworkExperiements(unittest.TestCase):
         n = nn.Network(sizes=sizes, train_filename=train_file, test_filename=test_file)
 
         rate = 0.1
-        momentum = 0.9
+        momentum = 1
         target = 0.9
         wᵢ, wⱼ, accuracy = n.train(η=rate, α=momentum, target=target)
 

@@ -304,7 +304,11 @@ class Network:
 
         return conf_matrix
 
-    def train(self, η: float, α:float, target: float, epochs=50, initial_weight_low=-.05, initial_weight_high=.05) -> (NDArray[Any, Any], NDArray[Any, Any], float):
+
+
+    #def train(self, η: float, α:float, target: float, epochs=50, initial_weight_low=-.05, initial_weight_high=.05) -> (NDArray[Any, Any], NDArray[Any, Any], float):
+
+    def train(self, η: float, α:float, target: float, epochs=50, initial_weight=.05) -> (NDArray[Any, Any], NDArray[Any, Any], float):
         """ Train a Neural Network to recognize handwritten digits
         Reports the accuracy and a confusion matrix
         Returns the Perceptron model in the form of weights
@@ -328,8 +332,8 @@ class Network:
 
         # TODO: Make passing this in as optional (for testing)
         # Initialize weight matrices with random values
-        self.wᵢ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(self.input_size, self.hidden_size))
-        self.wⱼ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(self.hidden_size + 1, self.output_size))
+        self.wᵢ = np.random.uniform(low=(initial_weight * -1), high=initial_weight, size=(self.input_size, self.hidden_size))
+        self.wⱼ = np.random.uniform(low=(initial_weight * -1), high=initial_weight, size=(self.hidden_size + 1, self.output_size))
 
         # Initialize weight delta matrices with zeros
         self.Δwⱼᵢ = np.zeros(self.Δwⱼᵢ.shape)
