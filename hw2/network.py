@@ -130,28 +130,6 @@ class Network:
         # The Delta (chainge) in weight from hidden layer to output layer, from previous iteration
         self.Δwₖⱼ = NDArray[self.hidden_size + 1, self.output_size]
 
-    # @staticmethod
-    # def load(filename: str, input_size: int=785, bias: int=1) -> (NDArray[Any, Any], NDArray[Any]):
-    #     """ Load in mnist data set
-    #     The mnist data set file structure is as followings:
-    #
-    #     Column   0: [0 - 9]     Labels  Represents actual digit of the image
-    #     Cols 1-785: [0 - 255]   Pixels  Represents brightness each of the 784 pixes in a 28 x 28 image
-    #
-    #     7,0,0,0, ... , 17, 235, 250, 169, 0, 0, 0, ...
-    #     1,0,0,0, ... , 0,    7, 251,  15, 0, 0, 0, ...
-    #     4,0,0,0, ... , 88,   0,   0,  95, 0, 0, 0, ...
-    #     """
-    #     print(f"Loading Data: {filename}")
-    #
-    #     data_file = np.loadtxt(filename, delimiter=',')
-    #     # The bias is added to the first column
-    #     dataset = np.insert(data_file[:, np.arange(1, input_size)] / 255, 0, bias, axis=1)
-    #     data_labels = data_file[:, 0]
-    #
-    #     # TODO: I wanna wrap this into a single object
-    #     return dataset, data_labels
-
     def load(self, filename: str) -> (NDArray[Any, 785], NDArray[Any]):
         """ Load in mnist data set
         The mnist data set file structure is as followings:

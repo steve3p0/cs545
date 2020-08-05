@@ -39,6 +39,8 @@ class TestNetworkExperiements(unittest.TestCase):
 
         n = nn.Network(sizes, train_filename=train_file, test_filename=test_file)
 
+        print(f"\n\n#### Experiment 1: Hidden Layer Size #####################")
+
         print(f"\nExperiment #1: {hidden_size} hidden nodes")
         print(f"--------------------------------------------------")
         wᵢ, wⱼ, accuracy = n.train(epochs=epochs)
@@ -60,31 +62,45 @@ class TestNetworkExperiements(unittest.TestCase):
         wᵢ, wⱼ, accuracy = n.train(epochs=epochs)
         assert(accuracy > expected_accuracy)
 
+        print(f"\n\n#### Experiment 3: Momentum ############################")
+
         momentum = 0.25
-        hidden_size = 100
-        sizes = [input_size, hidden_size, output_size]
-        n.resize(sizes)
-        print(f"\nExperiment #2: {momentum} momentum")
+        print(f"\nExperiment #3: {momentum} momentum")
         print(f"--------------------------------------------------")
         wᵢ, wⱼ, accuracy = n.train(α=momentum, epochs=epochs)
         assert(accuracy > expected_accuracy)
 
         momentum = 0.5
-        hidden_size = 100
-        sizes = [input_size, hidden_size, output_size]
-        n.resize(sizes)
-        print(f"\nExperiment #2: {momentum} momentum")
+        print(f"\nExperiment #3: {momentum} momentum")
         print(f"--------------------------------------------------")
         wᵢ, wⱼ, accuracy = n.train(α=momentum, epochs=epochs)
         assert(accuracy > expected_accuracy)
 
         momentum = 0.95
-        hidden_size = 100
-        sizes = [input_size, hidden_size, output_size]
-        n.resize(sizes)
-        print(f"\nExperiment #2: {momentum} momentum")
+        print(f"\nExperiment #3: {momentum} momentum")
         print(f"--------------------------------------------------")
         wᵢ, wⱼ, accuracy = n.train(α=momentum, epochs=epochs)
+        assert(accuracy > expected_accuracy)
+
+        print(f"\n\n#### Experiment 2: Training Size #######################")
+        total_training_samples = len(n.train_labels)
+
+        training_size = 0.50
+        samples = int(total_training_samples * training_size)
+        print(f"\nExperiment #2: {training_size} training data")
+        print(f"--------------------------------------------------")
+        n.train_labels = n.train_labels[:samples]
+        n.train_data = n.train_data[:samples]
+        wᵢ, wⱼ, accuracy = n.train(epochs=epochs)
+        assert(accuracy > expected_accuracy)
+
+        training_size = 0.25
+        samples = int(total_training_samples * training_size)
+        print(f"\nExperiment #2: {training_size} training data")
+        print(f"--------------------------------------------------")
+        n.train_labels = n.train_labels[:samples]
+        n.train_data = n.train_data[:samples]
+        wᵢ, wⱼ, accuracy = n.train(epochs=epochs)
         assert(accuracy > expected_accuracy)
 
     def test_experiment1(self):
@@ -164,7 +180,7 @@ class TestNetworkExperiements(unittest.TestCase):
         # hidden_size = 20
         # output_size = 10
         # sizes = [input_size, hidden_size, output_size]
-        #n.resize(sizes)
+        # n.resize(sizes)
 
         rate = 0.1
         momentum = 0.9
@@ -180,7 +196,7 @@ class TestNetworkExperiements(unittest.TestCase):
         assert(wⱼ.shape == (hidden_size + 1, output_size))
 
         # Test accuracy over 90%
-        #assert(accuracy > .90)
+        # assert(accuracy > .90)
         assert(accuracy > .15)
 
 
