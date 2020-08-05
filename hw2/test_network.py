@@ -11,7 +11,7 @@ import network as nn
 import test_network_data as testdata
 
 
-class TestNetworkExperiements(unittest.TestCase):
+class TestNetworkExperiments(unittest.TestCase):
     """ Integration Tests for HW #2 Experiments
 
     You can run all of the experiments by running the following test:
@@ -28,20 +28,19 @@ class TestNetworkExperiements(unittest.TestCase):
     The MNIST train and test files in current directory with exact filename below.
 
     Modify the train_file, test_file, epoch settings below
-
     """
 
     # Settings for a full blown integration test
-    # epochs = 50
-    # expected_accuracy = .90
-    # train_file = 'mnist_train.csv'        # Full size training file
-    # test_file = 'mnist_validation.csv'    # Full size training file
+    epochs = 50
+    expected_accuracy = .90
+    train_file = 'mnist_train.csv'        # Full size training file
+    test_file = 'mnist_validation.csv'    # Full size training file
 
     # Settings for a veru small integration test
-    epochs = 3
-    expected_accuracy = .80
-    train_file = 'mnist_train_6k.csv'       # Small train file for quick test
-    test_file = 'mnist_validation_1k.csv'   # Small test  file for quick test
+    # epochs = 3
+    # expected_accuracy = .80
+    # train_file = 'mnist_train_6k.csv'       # Small train file for quick test
+    # test_file = 'mnist_validation_1k.csv'   # Small test  file for quick test
 
     def test_all_experiments(self):
         """ Full integration test of all experiments
@@ -283,7 +282,7 @@ class TestNetwork(unittest.TestCase):
         assert(n.layers == layers)
         assert(n.sizes == sizes)
         assert(n.input_size == input_size)
-        assert(n.hidden_size == hidden_size)   # + 1 for Bias
+        assert(n.hidden_size == hidden_size)
         assert(n.output_size == output_size)
 
         assert(n.bias == bias)
@@ -308,7 +307,7 @@ class TestNetwork(unittest.TestCase):
 
         layers = 3
         input_size = 785
-        hidden_size = 20 + 1 # bias
+        hidden_size = 20
         output_size = 10
         sizes = [input_size, hidden_size, output_size]
         bias = 1
@@ -452,28 +451,32 @@ class TestNetwork(unittest.TestCase):
 
     def test_learn(self):
 
-        rate = 0.1
-        target = 0.9
-        initial_weight_low = -0.05
-        initial_weight_high = 0.05
-
         input_size = 785
         hidden_size = 20
         output_size = 10
         sizes = [input_size, hidden_size, output_size]
+
+        rate = 0.1
+        momentum = 0.9
+        target = 0.9
+        initial_weight_low = -0.05
+        initial_weight_high = 0.05
+
         n = nn.Network(sizes=sizes)
+
+        n.η = rate
+        n.α = momentum
 
         n.train_labels = testdata.train_labels_60
         n.train_data = testdata.train_data_60
-
         n.wᵢ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(input_size, hidden_size))
         n.wⱼ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(hidden_size + 1, output_size))
 
-        hⱼ = np.ones(hidden_size + 1)
         tₖ = np.ones((output_size, output_size), float) - target
+        np.fill_diagonal(tₖ, target)
+        hⱼ = np.ones(hidden_size + 1)
 
-        # def learn(self, η: float, hⱼ: NDArray[int], tₖ: NDArray[Any, Any]):
-        n.learn(η=rate, hⱼ=hⱼ, tₖ=tₖ)
+        n.learn(hⱼ=hⱼ, tₖ=tₖ)
 
         # Test Shape of weights from input to hidden
         assert(n.wᵢ.shape == (input_size, hidden_size))
@@ -506,18 +509,20 @@ class TestNetwork(unittest.TestCase):
         assert(predictions == expected_predictions)
 
     def test_report(self):
-        bias = 1
-        n = nn.Network(sizes=[785, 10], bias=bias)
+        input_size = 785
+        hidden_size = 20
+        output_size = 10
+        sizes = [input_size, hidden_size, output_size]
+        n = nn.Network(sizes=sizes)
+
         n.rate = 0.1
         n.test_labels = testdata.test_labels_10
 
         predictions = [7, 2, 1, 0, 9, 1, 4, 9, 6, 9]
-        test_accuracy = 0.80
         train_epoch_accuracy = [0.08735, 0.8756, 0.86975, 0.8623666666666666, 0.8714333333333333, 0.8639333333333333, 0.8916666666666667, 0.8642833333333333, 0.8893333333333333, 0.8867333333333334, 0.8793166666666666, 0.8778666666666667, 0.87285, 0.8519, 0.8774333333333333, 0.8725333333333334, 0.8682333333333333, 0.8848666666666667, 0.8672333333333333, 0.88585, 0.8916833333333334, 0.8859833333333333, 0.8844, 0.86395, 0.8768666666666667, 0.87785, 0.8990166666666667, 0.8808166666666667, 0.8971833333333333, 0.8925166666666666, 0.8995666666666666, 0.8684833333333334, 0.8915333333333333, 0.87115, 0.87725, 0.88015, 0.8810666666666667, 0.88425, 0.89875, 0.9054666666666666, 0.8758333333333334, 0.87295, 0.8893333333333333, 0.8859666666666667, 0.8913666666666666, 0.8685666666666667, 0.9002333333333333, 0.8891333333333333, 0.8698666666666667, 0.8714833333333334, 0.8774]
         test_epoch_accuracy = [0.0863, 0.877, 0.8631, 0.8585, 0.8631, 0.8531, 0.8861, 0.8558, 0.8825, 0.8776, 0.8684, 0.8656, 0.8702, 0.8418, 0.8654, 0.8673, 0.8595, 0.8746, 0.8555, 0.8757, 0.8786, 0.878, 0.8743, 0.8567, 0.8629, 0.8659, 0.8898, 0.8695, 0.8864, 0.8797, 0.8859, 0.8549, 0.8815, 0.8624, 0.8625, 0.8698, 0.8699, 0.8727, 0.8863, 0.8939, 0.8599, 0.8649, 0.879, 0.8732, 0.8805, 0.8561, 0.8859, 0.876, 0.8581, 0.8615, 0.8651]
 
-        conf_matrix = n.report(rate=n.rate, prediction=predictions, test_accuracy=test_accuracy,
-                 train_epoch_accuracy=train_epoch_accuracy, test_epoch_accuracy=test_epoch_accuracy)
+        conf_matrix = n.report(rate=n.rate, prediction=predictions, train_epoch_accuracy=train_epoch_accuracy, test_epoch_accuracy=test_epoch_accuracy)
 
         # @formatter:off
         expected_conf_matrix = np.array \
@@ -539,13 +544,10 @@ class TestNetwork(unittest.TestCase):
 
     def test_train(self):
 
-        rate = 0.1
-        momentum = 0.9
-        target = 0.9
-        epochs = 3
+        expected_accuracy = .50
 
         input_size = 785
-        hidden_size = 20
+        hidden_size = 100
         output_size = 10
         sizes = [input_size, hidden_size, output_size]
         n = nn.Network(sizes=sizes)
@@ -555,12 +557,18 @@ class TestNetwork(unittest.TestCase):
         n.test_labels = testdata.test_labels_10
         n.test_data = testdata.test_data_10
 
-        wᵢ, wⱼ, accuracy = n.train(η=rate, α=momentum, target=target, epochs=epochs)
+        rate = 0.1
+        momentum = 0.95
+        target = 0.9
+        epochs = 20
+
+        w_i, w_j, accuracy = n.train(η=rate, α=momentum, target=target, epochs=epochs)
 
         # Test Shape of weights from input to hidden
-        assert(wᵢ.shape == (input_size, hidden_size))
+        assert(w_i.shape == (input_size, hidden_size))
         # Test Shape of weights from hidden to output
         # TODO: is the shape of wⱼ : hidden + 1, ....?
-        assert(wⱼ.shape == (hidden_size + 1, output_size))
+        assert(w_j.shape == (hidden_size + 1, output_size))
 
-        assert(accuracy > .40)
+        print(f"accuracy: {accuracy}")
+        assert(accuracy > expected_accuracy)

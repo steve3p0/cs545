@@ -130,7 +130,7 @@ class Network:
         # The Delta (chainge) in weight from hidden layer to output layer, from previous iteration
         self.Δwₖⱼ = NDArray[self.hidden_size + 1, self.output_size]
 
-    def load(self, filename: str) -> (NDArray[Any, 785], NDArray[Any]):
+    def load(self, filename: str) -> (NDArray[Any, Any], NDArray[Any]):
         """ Load in mnist data set
         The mnist data set file structure is as followings:
 
@@ -255,7 +255,7 @@ class Network:
             # Back propagate
             self.back(xᵢ=xᵢ, hⱼ=hⱼ, δⱼ=δⱼ, δₖ=δₖ)
 
-    def evaluate(self, dataset: NDArray[785], data_labels: NDArray[int]) -> (float, NDArray[int]):
+    def evaluate(self, dataset: NDArray[Any, Any], data_labels: NDArray[int]) -> (float, NDArray[int]):
         """ Evaulate Accuracy
         Calculate the accuracy of the perceptron's predictions for a given dataset
 
