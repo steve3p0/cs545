@@ -37,6 +37,7 @@ class Network:
     """
 
     # Properties Set During Compile Time
+    sizes: NDArray[int]
     layers: int
     input_size: int
     hidden_size: int
@@ -45,7 +46,6 @@ class Network:
     # Properties set during Run Time
     η: float
     α: float
-    target: float
     bias: int
     epochs: int
 
@@ -71,21 +71,15 @@ class Network:
         object with all the necessary attributes to run multiple trainings.
         """
 
-        # Set the dimensions of our network
-        self.layers = len(sizes)
-        self.sizes = sizes
-        self.input_size = sizes[0]
-        self.hidden_size = sizes[1]
-        self.output_size = sizes[len(sizes) - 1]
-
-        self.bias = bias
-
         # Initialize the learning rate η, the momentum α, the bias, the target, and number of epochs
         # These will be set during training
         self.η = 0.0
         self.α = 0.0
-        #self.target = 0.0
         self.epochs = 0
+        self.bias = bias
+
+        # Initialize the sizes of the layers
+        self.resize(sizes)
 
         # Load the training samples
         # TODO: Wrap the data and labels in a set
@@ -102,6 +96,20 @@ class Network:
             self.test_labels = None
         else:
             self.test_data, self.test_labels = self.load(test_filename)
+
+    def resize(self, sizes: List[int]):
+        """ Resize the Neural network
+        Set the dimensions of our network
+
+        Parameters:
+            sizes   A list of layers and their sizes
+        """
+
+        self.layers = len(sizes)
+        self.sizes = sizes
+        self.input_size = sizes[0]
+        self.hidden_size = sizes[1]
+        self.output_size = sizes[len(sizes) - 1]
 
         # TODO: For testing purposes allow for passing weights in as a param
         # TODO: Allow this initialization to happen during training
@@ -121,6 +129,28 @@ class Network:
         self.Δwⱼᵢ = NDArray[self.input_size, self.hidden_size]
         # The Delta (chainge) in weight from hidden layer to output layer, from previous iteration
         self.Δwₖⱼ = NDArray[self.hidden_size + 1, self.output_size]
+
+    # @staticmethod
+    # def load(filename: str, input_size: int=785, bias: int=1) -> (NDArray[Any, Any], NDArray[Any]):
+    #     """ Load in mnist data set
+    #     The mnist data set file structure is as followings:
+    #
+    #     Column   0: [0 - 9]     Labels  Represents actual digit of the image
+    #     Cols 1-785: [0 - 255]   Pixels  Represents brightness each of the 784 pixes in a 28 x 28 image
+    #
+    #     7,0,0,0, ... , 17, 235, 250, 169, 0, 0, 0, ...
+    #     1,0,0,0, ... , 0,    7, 251,  15, 0, 0, 0, ...
+    #     4,0,0,0, ... , 88,   0,   0,  95, 0, 0, 0, ...
+    #     """
+    #     print(f"Loading Data: {filename}")
+    #
+    #     data_file = np.loadtxt(filename, delimiter=',')
+    #     # The bias is added to the first column
+    #     dataset = np.insert(data_file[:, np.arange(1, input_size)] / 255, 0, bias, axis=1)
+    #     data_labels = data_file[:, 0]
+    #
+    #     # TODO: I wanna wrap this into a single object
+    #     return dataset, data_labels
 
     def load(self, filename: str) -> (NDArray[Any, 785], NDArray[Any]):
         """ Load in mnist data set
@@ -198,24 +228,25 @@ class Network:
         # Need to save the delta for the next iteration
         self.Δwₖⱼ = Δwₖⱼ
 
-    def learn(self, η: float, hⱼ: NDArray[int], tₖ: NDArray[Any, Any]):
+    def learn(self, hⱼ: NDArray[int], tₖ: NDArray[Any, Any]):
         """ Learn applying stochastic Gradient Decent from pages 38-40:
         http://web.cecs.pdx.edu/~doliotis/MachineLearningSummer2020/lectures/lecture04/NeuralNetworksML.pdf
 
         Parameters:
-            η       The Learning rate
             hⱼ       The hidden layer
-            tₖ
+            tₖ       The target matrix tₖ for calculating output error term δₖ
 
         Local Variables:
             M       M is the total number of training examples
             k       k  is the indexer used in the slide deck
-            xᴷ      xᴷ is the input  (layer) vector of 784 (+1 bias) pixels of a single image
-            yᴷ      yᴷ is the output (layer) vector of 10 nodes representing activation level of a digit
+            xᵢ      The input  (layer) vector of 784 (+1 bias) pixels of a single image
+            oₖ      The output vector
+            δₖ      The output error term
+            δⱼ      The hidden error term
         """
+
         M = len(self.train_labels)
         for k in range(0, M):
-
             ################################################################
             # 1. Propagate the input forward
 
@@ -271,7 +302,7 @@ class Network:
         return accuracy, prediction
 
     def report(self, rate: float, prediction: List[int], test_accuracy: float,
-                     train_epoch_accuracy: List[float], test_epoch_accuracy: List[float]) -> NDArray[10, 10]:
+               train_epoch_accuracy: List[float], test_epoch_accuracy: List[float]) -> NDArray[10, 10]:
         """ Report results from training
         Display a confusion matrix and plot the accuracy
 
@@ -304,11 +335,8 @@ class Network:
 
         return conf_matrix
 
-
-
-    #def train(self, η: float, α:float, target: float, epochs=50, initial_weight_low=-.05, initial_weight_high=.05) -> (NDArray[Any, Any], NDArray[Any, Any], float):
-
-    def train(self, η: float, α:float, target: float, epochs=50, initial_weight=.05) -> (NDArray[Any, Any], NDArray[Any, Any], float):
+    # def train(self, η: float=0.1, α: float=1, target: float=0.9, epochs: int=50, initial_weight: float=.05) -> (NDArray[Any, Any], NDArray[Any, Any], float):
+    def train(self, η: float=0.1, α: float=1.0, target: float=0.9, epochs: int=50, initial_weight: float=0.05) -> (NDArray[Any, Any], NDArray[Any, Any], float):
         """ Train a Neural Network to recognize handwritten digits
         Reports the accuracy and a confusion matrix
         Returns the Perceptron model in the form of weights
@@ -332,8 +360,10 @@ class Network:
 
         # TODO: Make passing this in as optional (for testing)
         # Initialize weight matrices with random values
-        self.wᵢ = np.random.uniform(low=(initial_weight * -1), high=initial_weight, size=(self.input_size, self.hidden_size))
-        self.wⱼ = np.random.uniform(low=(initial_weight * -1), high=initial_weight, size=(self.hidden_size + 1, self.output_size))
+        self.wᵢ = np.random.uniform(low=(initial_weight * -1), high=initial_weight,
+                                    size=(self.input_size, self.hidden_size))
+        self.wⱼ = np.random.uniform(low=(initial_weight * -1), high=initial_weight,
+                                    size=(self.hidden_size + 1, self.output_size))
 
         # Initialize weight delta matrices with zeros
         self.Δwⱼᵢ = np.zeros(self.Δwⱼᵢ.shape)
@@ -363,12 +393,12 @@ class Network:
             print(f"\t\t\tTesting Accuracy:  {test_accuracy:.1%}")
 
             # Learn the weights based on the rate
-            self.learn(η=η, hⱼ=hⱼ, tₖ=tₖ)
+            self.learn(hⱼ=hⱼ, tₖ=tₖ)
 
         # Evaluate Perceptron Network on Test Data
         test_accuracy, test_predictions = self.evaluate(self.test_data, self.test_labels)
         conf_matrix = self.report(rate=η, prediction=test_predictions, test_accuracy=test_accuracy,
-                                          train_epoch_accuracy=train_epoch_accuracy, test_epoch_accuracy=test_epoch_accuracy)
+                                  train_epoch_accuracy=train_epoch_accuracy, test_epoch_accuracy=test_epoch_accuracy)
         print(f"\n")
         print(f"Test Accuracy: {test_accuracy:.1%}")
         print(f"Learning Rate: {np.format_float_positional(η, trim='-')}%")
