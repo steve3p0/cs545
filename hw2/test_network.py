@@ -28,6 +28,80 @@ class TestNetworkExperiements(unittest.TestCase):
         # train_file = 'mnist_train_15k.csv'
         # test_file = 'mnist_validation_1k.csv'
 
+        epochs = 3              # 3, 10, 50
+        expected_accuracy = .80 # .80 for small tests, .90 for full test
+
+        # Initial dimensions of the layers
+        input_size = 785
+        hidden_size = 20
+        output_size = 10
+        sizes = [input_size, hidden_size, output_size]
+
+        n = nn.Network(sizes, train_filename=train_file, test_filename=test_file)
+
+        print(f"\nExperiment #1: {hidden_size} hidden nodes")
+        print(f"--------------------------------------------------")
+        wᵢ, wⱼ, accuracy = n.train(epochs=epochs)
+        assert(accuracy > expected_accuracy)
+
+        hidden_size = 50
+        sizes = [input_size, hidden_size, output_size]
+        n.resize(sizes)
+        print(f"\nExperiment #1: {hidden_size} hidden nodes")
+        print(f"--------------------------------------------------")
+        wᵢ, wⱼ, accuracy = n.train(epochs=epochs)
+        assert(accuracy > expected_accuracy)
+
+        hidden_size = 100
+        sizes = [input_size, hidden_size, output_size]
+        n.resize(sizes)
+        print(f"\nExperiment #1: {hidden_size} hidden nodes")
+        print(f"--------------------------------------------------")
+        wᵢ, wⱼ, accuracy = n.train(epochs=epochs)
+        assert(accuracy > expected_accuracy)
+
+        momentum = 0.25
+        hidden_size = 100
+        sizes = [input_size, hidden_size, output_size]
+        n.resize(sizes)
+        print(f"\nExperiment #2: {momentum} momentum")
+        print(f"--------------------------------------------------")
+        wᵢ, wⱼ, accuracy = n.train(α=momentum, epochs=epochs)
+        assert(accuracy > expected_accuracy)
+
+        momentum = 0.5
+        hidden_size = 100
+        sizes = [input_size, hidden_size, output_size]
+        n.resize(sizes)
+        print(f"\nExperiment #2: {momentum} momentum")
+        print(f"--------------------------------------------------")
+        wᵢ, wⱼ, accuracy = n.train(α=momentum, epochs=epochs)
+        assert(accuracy > expected_accuracy)
+
+        momentum = 0.95
+        hidden_size = 100
+        sizes = [input_size, hidden_size, output_size]
+        n.resize(sizes)
+        print(f"\nExperiment #2: {momentum} momentum")
+        print(f"--------------------------------------------------")
+        wᵢ, wⱼ, accuracy = n.train(α=momentum, epochs=epochs)
+        assert(accuracy > expected_accuracy)
+
+    def test_experiment1(self):
+        """ Full integration test of all experiments
+
+        ASSUMPTION:
+        That you have the MNIST train and test files in current directory
+        with exact filename below
+        """
+
+        # train_file = 'mnist_train.csv'
+        # test_file = 'mnist_validation.csv'
+        train_file = 'mnist_train_6k.csv'
+        test_file = 'mnist_validation_1k.csv'
+        # train_file = 'mnist_train_15k.csv'
+        # test_file = 'mnist_validation_1k.csv'
+
         epochs = 3 # 3, 10, 50
         expected_accuracy = .80 # .80 for small tests, .90 for full test
 
@@ -59,6 +133,7 @@ class TestNetworkExperiements(unittest.TestCase):
         print(f"--------------------------------------------------")
         wᵢ, wⱼ, accuracy = n.train(epochs=epochs)
         assert(accuracy > expected_accuracy)
+
 
     ##################################
     # refactored
