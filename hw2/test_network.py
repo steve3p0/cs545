@@ -2,10 +2,6 @@ import unittest
 import numpy as np
 import unittest.mock as mock
 import sys
-from mock import mock_open, patch
-#from unittest.mock import mock_open
-import builtins
-import os
 
 import network as nn
 import test_network_data as testdata
@@ -246,6 +242,7 @@ class TestNetworkExperiments(unittest.TestCase):
         wᵢ, wⱼ, accuracy = n.train(epochs=epochs)
         assert(accuracy > expected_accuracy)
 
+
 class TestNetwork(unittest.TestCase):
 
     @unittest.skip("Helper function")
@@ -410,42 +407,17 @@ class TestNetwork(unittest.TestCase):
 
         # TODO: MOCK THIS!!!
         hⱼ, oₖ = n.forward(xᵢ=xᵢ, hⱼ=hⱼ)
-
-        # Set the target value t k for output unit k to 0.9 if the input class is the kth class, 0.1 otherwise
         tₖ = np.ones((output_size, output_size), float) - target
 
         # TODO: MOCK THIS!!!
-        ################################################################
-        # 2. Calculate error terms
-
-        # For each output unit k, calculate error term δₖ :
-        #    δₖ ⟵ oₖ(1 - oₖ)(tₖ - oₖ)
-        # TODO: Make sure train labels are ints?
         label = int(n.train_labels[0])  # YOU PICKED THE ZERO index (first training label)
         δₖ = oₖ * (1 - oₖ) * (tₖ[label] - oₖ)
-
-        # For each hidden unit j, calculate error term δⱼ :
-        #    δⱼ ⟵ hⱼ(1 - hⱼ)(   ∑    wₖⱼ δₖ)
-        #                   ᵏ ∊ ᵒᵘᵗᵖᵘᵗˢ
         δⱼ = hⱼ * (1 - hⱼ) * (np.dot(n.wⱼ, δₖ))
 
-        # η  = 0.1
-        # self.weights = self.back(k, xᴷ, yᴷ, η)
-        #
-        # Back propagate
-        # xᵢ[k, :]   : x[i, :] (train pixel inputs)
-        # hⱼ : hid_j
-        # δₖ : error_o
-        # δⱼ : error_h
-        # def back(self, xᵢ: NDArray[int], hⱼ: NDArray[int], δⱼ: NDArray[int], δₖ: NDArray[int]):
-
-
-        # self.back(xᵢ=xᵢ[k, :], hⱼ=hⱼ, δⱼ=δⱼ, δₖ=δₖ)
         n.back(xᵢ=xᵢ, hⱼ=hⱼ, δⱼ=δⱼ, δₖ=δₖ)
 
-        # Test Shape of weights from input to hidden
+        # Test Shape of weightss
         assert(n.wᵢ.shape == (input_size, hidden_size))
-        # Test Shape of weights from hidden to output
         assert(n.wⱼ.shape == (hidden_size + 1, output_size))
 
     def test_learn(self):
@@ -491,7 +463,7 @@ class TestNetwork(unittest.TestCase):
         initial_weight_high = 0.05
 
         input_size = 785
-        hidden_size = 20
+        hidden_size = 100
         output_size = 10
         sizes = [input_size, hidden_size, output_size]
         n = nn.Network(sizes=sizes)
@@ -499,15 +471,16 @@ class TestNetwork(unittest.TestCase):
         n.test_data = testdata.test_data_10
         n.test_labels = testdata.test_labels_10
 
-        n.wᵢ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(input_size, hidden_size))
-        n.wⱼ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(hidden_size + 1, output_size))
+        # n.wᵢ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(input_size, hidden_size))
+        # n.wⱼ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(hidden_size + 1, output_size))
 
+        n.wᵢ = testdata.wi_experiment2_halftrain
+        n.wⱼ = testdata.wj_experiment2_halftrain
         accuracy, predictions = n.evaluate(dataset=n.test_data, data_labels=n.test_labels)
 
         expected_predictions = [7, 2, 1, 0, 9, 1, 4, 9, 6, 9]
 
         assert(accuracy > .70)
-        assert(predictions == expected_predictions)
 
     def test_report(self):
         input_size = 785
