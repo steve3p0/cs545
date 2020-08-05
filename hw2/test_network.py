@@ -399,6 +399,8 @@ class TestNetwork(unittest.TestCase):
 
         n.wᵢ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(input_size, hidden_size))
         n.wⱼ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(hidden_size + 1, output_size))
+        n.Δwⱼᵢ = np.zeros(n.Δwⱼᵢ.shape)
+        n.Δwₖⱼ = np.zeros(n.Δwₖⱼ.shape)
 
         n.train_labels = testdata.train_labels_60
 
@@ -406,11 +408,8 @@ class TestNetwork(unittest.TestCase):
         xᵢ = testdata.train_data_60[k]
         hⱼ = np.ones(hidden_size + 1)
 
-        # yᴷ = n.forward(xᵢ=xᵢ, hⱼ=hⱼ)
-
         # TODO: MOCK THIS!!!
         hⱼ, oₖ = n.forward(xᵢ=xᵢ, hⱼ=hⱼ)
-
 
         # Set the target value t k for output unit k to 0.9 if the input class is the kth class, 0.1 otherwise
         tₖ = np.ones((output_size, output_size), float) - target
@@ -471,6 +470,8 @@ class TestNetwork(unittest.TestCase):
         n.train_data = testdata.train_data_60
         n.wᵢ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(input_size, hidden_size))
         n.wⱼ = np.random.uniform(low=initial_weight_low, high=initial_weight_high, size=(hidden_size + 1, output_size))
+        n.Δwⱼᵢ = np.zeros(n.Δwⱼᵢ.shape)
+        n.Δwₖⱼ = np.zeros(n.Δwₖⱼ.shape)
 
         tₖ = np.ones((output_size, output_size), float) - target
         np.fill_diagonal(tₖ, target)
