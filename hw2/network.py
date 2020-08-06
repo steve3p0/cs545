@@ -361,12 +361,12 @@ class Network:
             # Evaluate the network's training accuracy
             train_accuracy, _ = self.evaluate(self.train_data, self.train_labels)
             train_epoch_accuracy.append(train_accuracy)
-            print(f"Epoch {epoch}:\tTraining Accuracy: {train_accuracy:.1%}")
+            # print(f"Epoch {epoch}:\tTraining Accuracy: {train_accuracy:.1%}")
 
             # Evaluate how well the network generalizes to non-training test data
             test_accuracy, _ = self.evaluate(self.test_data, self.test_labels)
             test_epoch_accuracy.append(test_accuracy)
-            print(f"\t\t\tTesting Accuracy:  {test_accuracy:.1%}")
+            # print(f"\t\t\tTesting Accuracy:  {test_accuracy:.1%}")
 
             # Learn the weights based on the rate
             self.learn(hⱼ=hⱼ, tₖ=tₖ)
