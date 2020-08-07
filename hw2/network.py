@@ -172,6 +172,7 @@ class Network:
         http://web.cecs.pdx.edu/~doliotis/MachineLearningSummer2020/lectures/lecture07/NotesOnImplementingNN.pdf
 
             Δwⱼ,ᵢ = ηδⱼxᵢ + αΔw'ⱼ,ᵢ     where Δw'ⱼ,ᵢ is the change to this weight from previous iteration
+            Δwₖ,ⱼ = ηδₖxᵢ + αΔw'ⱼ,ᵢ     where Δw'ⱼ,ᵢ is the change to this weight from previous iteration
 
         Parameters:
             xᵢ      The input image vector of 784 pixel values (+1 for the bias)
