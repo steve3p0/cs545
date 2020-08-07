@@ -61,7 +61,7 @@ class Network:
     Δwⱼᵢ = NDArray[Any, Any]
     Δwₖⱼ = NDArray[Any, Any]
 
-    def __init__(self, sizes: List[int], train_filename=None, test_filename=None, bias=1):
+    def __init__(self, sizes: List[int], train_filename: str=None, test_filename: str=None, bias: int=1):
         """ Constructor for Neural Network
         The constructor for this class does the following:
          (1) Initializes the layers, sizes of each layer, and the bias.
@@ -374,9 +374,9 @@ class Network:
         # Evaluate Perceptron Network on Test Data
         test_accuracy, test_predictions = self.evaluate(self.test_data, self.test_labels)
         conf_matrix = self.report(rate=η, prediction=test_predictions, train_epoch_accuracy=train_epoch_accuracy, test_epoch_accuracy=test_epoch_accuracy)
-        print(f"Test Accuracy: {test_accuracy:.1%}")
-        print(f"Learning Rate: {np.format_float_positional(η, trim='-')}%")
-        print(f"Confusion Matrix: ")
-        print(conf_matrix)
+        # print(f"Test Accuracy: {test_accuracy:.1%}")
+        # print(f"Learning Rate: {np.format_float_positional(η, trim='-')}%")
+        # print(f"Confusion Matrix: ")
+        # print(conf_matrix)
 
         return self.wᵢ, self.wⱼ, test_accuracy
