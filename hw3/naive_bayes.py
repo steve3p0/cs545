@@ -11,15 +11,6 @@ import statistics as stat
 import math
 
 
-class Attribute:
-    def __init__(self, attID):
-        self.attributeID = attID
-        self.mean = float()
-        self.stdDev = float()
-        self.prob = float()
-        self.values = []
-
-
 class testObject:
     def __init__(self, id, trueClass):
         self.id = id
@@ -37,7 +28,7 @@ class NaiveBayesClassifier:
     #Attribute = collections.namedtuple('Attribute', 'attributeID mean stdDev prob values')
 
     Classifier = recordclass('Classifier', 'classID prob attributes')
-    #Attribute = recordclass('Attribute', 'attributeID mean stdDev prob values')
+    Attribute = recordclass('Attribute', 'attributeID mean stdDev prob values')
 
     # a = Attribute(mean=1.35, stdDev=.75, prob=0.57, values=[1, 3, 5])
     # c = Classifier(prop=0.57, attributes=[a, a, a])
@@ -117,12 +108,13 @@ class NaiveBayesClassifier:
 
         # Create class objects and associated attribute objects
         for i in range(0, len(classNums)):
-            #self.classes.append(Classifier(i + 1))
             c = self.Classifier(classID=i+1, prob=float(), attributes=[])
             self.classes.append(c)
 
             for j in range(0, len(self.train_data[0].split()) - 1):
-                self.classes[i].attributes.append(Attribute(j + 1))
+                #self.classes[i].attributes.append(Attribute(j + 1))
+                a = self.Attribute(attributeID=j+1, mean=float(), stdDev=float(), prob=float, values=[])
+                self.classes[i].attributes.append(a)
 
         # Find and file values to associated attribute object
         for i in self.train_data:
@@ -138,7 +130,6 @@ class NaiveBayesClassifier:
         # Calculate p(C)
         for k in self.classes:
             k.prob = len(k.attributes[0].values) / len(self.train_data)
-            #k.prob._replace()
 
         # Calulate mean and standard deviation for each attribute
         for i in self.classes:
