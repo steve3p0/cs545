@@ -5,40 +5,19 @@
 # HW #3: Naive Bayes Classifier based on Gaussian
 
 import sys
-import collections
-from recordclass import recordclass
 import statistics as stat
 import math
-
-
-class testObject:
-    def __init__(self, id, trueClass):
-        self.id = id
-        self.pClass = int()
-        self.prob = float()
-        self.tClass = trueClass
-        self.accuracy = float()
-        self.p_xGivenCs = []
-        self.p_x = 0
-
+from recordclass import recordclass
 
 class NaiveBayesClassifier:
-
-    #Classifier = collections.namedtuple('Classifier', 'classID prob attributes')
-    #Attribute = collections.namedtuple('Attribute', 'attributeID mean stdDev prob values')
+    """ Naive Bayes Classifier Object
+    This is class object holds the data structures and methods required to
+    classify data according to Gaussian Naive Bayes.
+    """
 
     Classifier = recordclass('Classifier', 'classID prob attributes')
     Attribute = recordclass('Attribute', 'attributeID mean stdDev prob values')
-
-    # a = Attribute(mean=1.35, stdDev=.75, prob=0.57, values=[1, 3, 5])
-    # c = Classifier(prop=0.57, attributes=[a, a, a])
-
-    # car1 = \
-    # {
-    #     'color': 'red',
-    #     'mileage': 3812.4,
-    #     'automatic': True,
-    # }
+    Sample = recordclass('Sample', 'id pClass prob tClass accuracy p_xGivenCs p_x')
 
     train_data: []
     test_data: []
@@ -53,7 +32,6 @@ class NaiveBayesClassifier:
         self.testObjs = []
 
     def load(self, file):
-        #return [line.rstrip('\n') for line in open(file)]
         line = ''
         with open(file) as fp:
             line = [line.rstrip('\n') for line in fp]
@@ -94,12 +72,12 @@ class NaiveBayesClassifier:
             else:
                 return 0
 
-    def train(self):
+    def train(self, data):
         ### Training Phase ###
         classNums = []
 
         # Determine # of classes
-        for i in self.train_data:
+        for i in data:
             tempStr = i.split()
             temp = [float(x) for x in tempStr]
 
@@ -112,7 +90,6 @@ class NaiveBayesClassifier:
             self.classes.append(c)
 
             for j in range(0, len(self.train_data[0].split()) - 1):
-                #self.classes[i].attributes.append(Attribute(j + 1))
                 a = self.Attribute(attributeID=j+1, mean=float(), stdDev=float(), prob=float, values=[])
                 self.classes[i].attributes.append(a)
 
@@ -138,11 +115,11 @@ class NaiveBayesClassifier:
                     j.mean = stat.mean(j.values)
                 j.stdDev = self.find_stdDev(j.values, j.mean)
 
-    def classify(self):
-        for index, i in enumerate(self.test_data):
+    def classify(self, data):
+        for index, i in enumerate(data):
             tempStr = i.split()
             temp = [float(x) for x in tempStr]
-            tempObj = testObject(index + 1, temp[-1])
+            sample = self.Sample(id=index+1, pClass=int(), prob=float(), tClass=temp[-1], accuracy=float(), p_xGivenCs=[], p_x=0)
 
             # Calculate gaussians for each class on the test object
             for j in range(0, len(self.classes)):
@@ -152,26 +129,26 @@ class NaiveBayesClassifier:
                     tempAtt = self.classes[j].attributes[ind]
                     p_xGivenC *= self.calc_gaussian(k, tempAtt.mean, tempAtt.stdDev)
 
-                tempObj.p_xGivenCs.append(p_xGivenC)
+                sample.p_xGivenCs.append(p_xGivenC)
 
             # Calculate p(x) with sum rule
             for j in range(0, len(self.classes)):
-                tempObj.p_x += (tempObj.p_xGivenCs[j] * self.classes[j].prob)
+                sample.p_x += (sample.p_xGivenCs[j] * self.classes[j].prob)
 
             # Use Bayes Rule to calculate P(C|x)
             classProbs = []
 
             for j in range(0, len(self.classes)):
-                classProbs.append((tempObj.p_xGivenCs[j] * self.classes[j].prob) / tempObj.p_x)
+                classProbs.append((sample.p_xGivenCs[j] * self.classes[j].prob) / sample.p_x)
 
             # Take the max value as the identified class
-            tempObj.prob = max(classProbs)
-            tempObj.pClass = classProbs.index(max(classProbs)) + 1
-            tempObj.accuracy = self.getAccuracy(classProbs, tempObj.tClass)
+            sample.prob = max(classProbs)
+            sample.pClass = classProbs.index(max(classProbs)) + 1
+            sample.accuracy = self.getAccuracy(classProbs, sample.tClass)
             print("ID=%5d, predicted=%3d, probability = %.4f, true=%3d, accuracy=%4.2f" % (
-            tempObj.id, tempObj.pClass, tempObj.prob, tempObj.tClass, tempObj.accuracy))
+            sample.id, sample.pClass, sample.prob, sample.tClass, sample.accuracy))
 
-            self.testObjs.append(tempObj)
+            self.testObjs.append(sample)
 
         # Calculate total accuracy
         accuracySum = 0
@@ -195,6 +172,6 @@ class NaiveBayesClassifier:
 if __name__ == "__main__":
     assert(len(sys.argv) >= 3, "Not enough command line arguments!")
     nb = NaiveBayesClassifier(sys.argv[1], sys.argv[2])
-    nb.train()
-    accuracy = nb.classify()
+    nb.train(nb.train_data)
+    accuracy = nb.classify(nb.test_data)
     nb.report(accuracy)
