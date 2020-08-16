@@ -5,15 +5,10 @@
 # HW #3: Naive Bayes Classifier based on Gaussian
 
 import sys
+import collections
+from recordclass import recordclass
 import statistics as stat
 import math
-
-
-class Classifier:
-    def __init__(self, id):
-        self.classID = id
-        self.prob = float()
-        self.attributes = []
 
 
 class Attribute:
@@ -23,6 +18,7 @@ class Attribute:
         self.stdDev = float()
         self.prob = float()
         self.values = []
+
 
 class testObject:
     def __init__(self, id, trueClass):
@@ -36,6 +32,22 @@ class testObject:
 
 
 class NaiveBayesClassifier:
+
+    #Classifier = collections.namedtuple('Classifier', 'classID prob attributes')
+    #Attribute = collections.namedtuple('Attribute', 'attributeID mean stdDev prob values')
+
+    Classifier = recordclass('Classifier', 'classID prob attributes')
+    #Attribute = recordclass('Attribute', 'attributeID mean stdDev prob values')
+
+    # a = Attribute(mean=1.35, stdDev=.75, prob=0.57, values=[1, 3, 5])
+    # c = Classifier(prop=0.57, attributes=[a, a, a])
+
+    # car1 = \
+    # {
+    #     'color': 'red',
+    #     'mileage': 3812.4,
+    #     'automatic': True,
+    # }
 
     train_data: []
     test_data: []
@@ -105,7 +117,9 @@ class NaiveBayesClassifier:
 
         # Create class objects and associated attribute objects
         for i in range(0, len(classNums)):
-            self.classes.append(Classifier(i + 1))
+            #self.classes.append(Classifier(i + 1))
+            c = self.Classifier(classID=i+1, prob=float(), attributes=[])
+            self.classes.append(c)
 
             for j in range(0, len(self.train_data[0].split()) - 1):
                 self.classes[i].attributes.append(Attribute(j + 1))
@@ -124,6 +138,7 @@ class NaiveBayesClassifier:
         # Calculate p(C)
         for k in self.classes:
             k.prob = len(k.attributes[0].values) / len(self.train_data)
+            #k.prob._replace()
 
         # Calulate mean and standard deviation for each attribute
         for i in self.classes:
