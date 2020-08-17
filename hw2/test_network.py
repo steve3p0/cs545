@@ -266,6 +266,52 @@ class TestNetwork(unittest.TestCase):
 
         # conf_maxtrix_str = np.array_repr(conf_matrix, max_line_width=None, precision=0).replace('\n', '').replace(' ','').replace('],', '],\n')
 
+    @unittest.skip("Helper function")
+    def create_static_weight_array(self):
+        """ Full integration test of Experiment #2
+        """
+
+        # Initial dimensions of the layers
+        input_size = 785
+        hidden_size = 100
+        output_size = 10
+        sizes = [input_size, hidden_size, output_size]
+
+        trainfile = 'mnist_train_6k.csv'       # Small train file for quick test
+        testfile = 'mnist_validation_1k.csv'   # Small test  file for quick test
+        epochs = 10
+        n = nn.Network(sizes, train_filename=trainfile, test_filename=testfile)
+
+        print(f"\n\n#### Experiment 2: Training Size #######################")
+        total_training_samples = len(n.train_labels)
+
+        training_size = 0.50
+        samples = int(total_training_samples * training_size)
+        print(f"\nExperiment #2: {training_size} training data")
+        print(f"--------------------------------------------------")
+        n.train_labels = n.train_labels[:samples]
+        n.train_data = n.train_data[:samples]
+        wᵢ, wⱼ, accuracy = n.train(epochs=epochs)
+
+        print(f"accuracy: {accuracy}")
+        np.set_printoptions(threshold=sys.maxsize, suppress=True)
+        # wi_str = np.array_repr(wᵢ, max_line_width=None, precision=0).replace('\n', '').replace(' ','').replace('],', '],\n')
+        wi_str = np.array_repr(wᵢ, max_line_width=None).replace('\n', '').replace(' ','').replace('],', '],\n')
+        wj_str = np.array_repr(wⱼ, max_line_width=None).replace('\n', '').replace(' ', '').replace('],', '],\n')
+
+        # print(f"\n\nwᵢ: {wᵢ}")
+        #print(f"\n\nwi_str: {wi_str}")
+
+        f = open("wi_str.txt", "w")
+        f.write(wi_str)
+        f.close()
+
+        f = open("wj_str.txt", "w")
+        f.write(wj_str)
+        f.close()
+
+        assert(accuracy > self.expected_accuracy)
+
     def test__init__nofileload(self):
         layers = 3
         bias = 1

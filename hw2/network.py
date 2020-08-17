@@ -61,7 +61,7 @@ class Network:
     Δwⱼᵢ = NDArray[Any, Any]
     Δwₖⱼ = NDArray[Any, Any]
 
-    def __init__(self, sizes: List[int], train_filename=None, test_filename=None, bias=1):
+    def __init__(self, sizes: List[int], train_filename: str=None, test_filename: str=None, bias: int=1):
         """ Constructor for Neural Network
         The constructor for this class does the following:
          (1) Initializes the layers, sizes of each layer, and the bias.
@@ -172,6 +172,7 @@ class Network:
         http://web.cecs.pdx.edu/~doliotis/MachineLearningSummer2020/lectures/lecture07/NotesOnImplementingNN.pdf
 
             Δwⱼ,ᵢ = ηδⱼxᵢ + αΔw'ⱼ,ᵢ     where Δw'ⱼ,ᵢ is the change to this weight from previous iteration
+            Δwₖ,ⱼ = ηδₖxᵢ + αΔw'ⱼ,ᵢ     where Δw'ⱼ,ᵢ is the change to this weight from previous iteration
 
         Parameters:
             xᵢ      The input image vector of 784 pixel values (+1 for the bias)
@@ -361,12 +362,12 @@ class Network:
             # Evaluate the network's training accuracy
             train_accuracy, _ = self.evaluate(self.train_data, self.train_labels)
             train_epoch_accuracy.append(train_accuracy)
-            print(f"Epoch {epoch}:\tTraining Accuracy: {train_accuracy:.1%}")
+            # print(f"Epoch {epoch}:\tTraining Accuracy: {train_accuracy:.1%}")
 
             # Evaluate how well the network generalizes to non-training test data
             test_accuracy, _ = self.evaluate(self.test_data, self.test_labels)
             test_epoch_accuracy.append(test_accuracy)
-            print(f"\t\t\tTesting Accuracy:  {test_accuracy:.1%}")
+            # print(f"\t\t\tTesting Accuracy:  {test_accuracy:.1%}")
 
             # Learn the weights based on the rate
             self.learn(hⱼ=hⱼ, tₖ=tₖ)
@@ -374,9 +375,9 @@ class Network:
         # Evaluate Perceptron Network on Test Data
         test_accuracy, test_predictions = self.evaluate(self.test_data, self.test_labels)
         conf_matrix = self.report(rate=η, prediction=test_predictions, train_epoch_accuracy=train_epoch_accuracy, test_epoch_accuracy=test_epoch_accuracy)
-        print(f"Test Accuracy: {test_accuracy:.1%}")
-        print(f"Learning Rate: {np.format_float_positional(η, trim='-')}%")
-        print(f"Confusion Matrix: ")
-        print(conf_matrix)
+        # print(f"Test Accuracy: {test_accuracy:.1%}")
+        # print(f"Learning Rate: {np.format_float_positional(η, trim='-')}%")
+        # print(f"Confusion Matrix: ")
+        # print(conf_matrix)
 
         return self.wᵢ, self.wⱼ, test_accuracy
