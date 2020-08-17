@@ -17,9 +17,9 @@ class NaiveBayesClassifier:
     classify data according to Gaussian Naive Bayes.
     """
 
-    Classifier = recordclass('Classifier', 'classID prob attributes')
-    Attribute = recordclass('Attribute', 'attributeID mean stdDev prob values')
-    Sample = recordclass('Sample', 'id pClass prob tClass accuracy p_xGivenCs p_x')
+    Classifier = recordclass('Classifier', 'class_id probability attributes')
+    Attribute = recordclass('Attribute', 'attr_id mean std_dev probability values')
+    Sample = recordclass('Sample', 'id class_probability probability class_label accuracy probability_x_given_class probability_x')
 
     train_data: []
     test_data: []
@@ -101,11 +101,11 @@ class NaiveBayesClassifier:
 
         # Create classifiers
         for i in range(0, len(class_ids)):
-            c = self.Classifier(classID=i+1, prob=float(), attributes=[])
+            c = self.Classifier(class_id=i+1, probability=float(), attributes=[])
             self.classes.append(c)
 
             for j in range(0, len(data[0].split()) - 1):
-                a = self.Attribute(attributeID=j+1, mean=float(), stdDev=float(), prob=float, values=[])
+                a = self.Attribute(attr_id=j+1, mean=float(), std_dev=float(), probability=float, values=[])
                 self.classes[i].attributes.append(a)
 
         # Calculate probailities
@@ -115,17 +115,17 @@ class NaiveBayesClassifier:
             class_id = int(fields[-1])
 
             for j in self.classes:
-                if (j.classID == class_id):
+                if (j.class_id == class_id):
                     for index, k in enumerate(fields[:-1]):
                         j.attributes[index].values.append(k)
-                j.prob = len(j.attributes[0].values) / len(data)
+                j.probability = len(j.attributes[0].values) / len(data)
 
         # Get the mean and std dev
         for i in self.classes:
             for j in i.attributes:
                 if (not (len(j.values) == 0)):
                     j.mean = stat.mean(j.values)
-                j.stdDev = self.std_dev(j.values, j.mean)
+                j.std_dev = self.std_dev(j.values, j.mean)
 
     def classify(self, data: []) -> float:
         """ Classify data based on trained Naive Bayes"""
@@ -133,51 +133,50 @@ class NaiveBayesClassifier:
         for index, i in enumerate(data):
             tempStr = i.split()
             temp = [float(x) for x in tempStr]
-            sample = self.Sample(id=index+1, pClass=int(), prob=float(), tClass=temp[-1], accuracy=float(), p_xGivenCs=[], p_x=0)
+            sample = self.Sample(id=index+1, class_probability=int(), probability=float(), class_label=temp[-1], accuracy=float(), probability_x_given_class=[], probability_x=0)
 
             # Calculate gaussians for each class on the test object
             for j in range(0, len(self.classes)):
-                p_xGivenC = 1
+                probability_x_given_class = 1
 
                 for ind, k in enumerate(temp[:-1]):
                     tempAtt = self.classes[j].attributes[ind]
-                    p_xGivenC *= self.gaussian(k, tempAtt.mean, tempAtt.stdDev)
+                    probability_x_given_class *= self.gaussian(k, tempAtt.mean, tempAtt.std_dev)
 
-                sample.p_xGivenCs.append(p_xGivenC)
-                sample.p_x += (sample.p_xGivenCs[j] * self.classes[j].prob)
+                sample.probability_x_given_class.append(probability_x_given_class)
+                sample.probability_x += (sample.probability_x_given_class[j] * self.classes[j].probability)
 
             # Use Bayes Rule to calculate P(C|x)
-            classProbs = []
+            class_probabilities = []
 
             for j in range(0, len(self.classes)):
-                classProbs.append((sample.p_xGivenCs[j] * self.classes[j].prob) / sample.p_x)
+                class_probabilities.append((sample.probability_x_given_class[j] * self.classes[j].probability) / sample.probability_x)
 
             # Take the max value as the identified class
-            sample.prob = max(classProbs)
-            sample.pClass = classProbs.index(max(classProbs)) + 1
-            sample.accuracy = self.accuracy(classProbs, sample.tClass)
+            sample.probability = max(class_probabilities)
+            sample.class_probability = class_probabilities.index(max(class_probabilities)) + 1
+            sample.accuracy = self.accuracy(class_probabilities, sample.class_label)
             print("ID=%5d, predicted=%3d, probability = %.4f, true=%3d, accuracy=%4.2f" % (
-            sample.id, sample.pClass, sample.prob, sample.tClass, sample.accuracy))
+            sample.id, sample.class_probability, sample.probability, sample.class_label, sample.accuracy))
 
             self.samples.append(sample)
 
-        # Calculate total accuracy
-        accuracySum = 0
+        total_accuracy = 0
         for i in self.samples:
-            accuracySum += i.accuracy
+            total_accuracy += i.accuracy
 
-        return accuracySum
+        return total_accuracy
 
-    def report(self, accuracySum: float) -> None:
+    def report(self, accuracy: float) -> None:
         """ Report
         Print the results of the classificiation
         """
         for i in self.classes:
             for j in i.attributes:
-                print("Class %d, attribute %d, mean = %.2f, std = %.2f" % (i.classID, j.attributeID, j.mean, j.stdDev))
+                print("Class %d, attribute %d, mean = %.2f, std = %.2f" % (i.class_id, j.attr_id, j.mean, j.std_dev))
             print()
 
-        print("\nclassification accuracy = %6.4f" % (accuracySum / len(self.samples)))
+        print("\nclassification accuracy = %6.4f" % (accuracy / len(self.samples)))
 
 
 if __name__ == "__main__":
