@@ -73,11 +73,6 @@ class NaiveBayesClassifier:
 
     def train(self, data=[]):
         """ Train a Gaussian Naive Bayes Classifier
-
-        :param data:
-        :type data:
-        :return:
-        :rtype:
         """
         classNums = []
 
@@ -111,6 +106,10 @@ class NaiveBayesClassifier:
                         j.attributes[index].values.append(k)
                 j.prob = len(j.attributes[0].values) / len(data)
 
+                # for k in j.attributes:
+                #     if (not (len(k.values) == 0)):
+                #         k.mean = stat.mean(k.values)
+                #     k.stdDev = self.find_stdDev(k.values, k.mean)
 
         # Calulate mean and standard deviation for each attribute
         for i in self.classes:
@@ -134,9 +133,6 @@ class NaiveBayesClassifier:
                     p_xGivenC *= self.calc_gaussian(k, tempAtt.mean, tempAtt.stdDev)
 
                 sample.p_xGivenCs.append(p_xGivenC)
-
-            # Calculate p(x) with sum rule
-            for j in range(0, len(self.classes)):
                 sample.p_x += (sample.p_xGivenCs[j] * self.classes[j].prob)
 
             # Use Bayes Rule to calculate P(C|x)
