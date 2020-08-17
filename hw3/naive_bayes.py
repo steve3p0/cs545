@@ -21,15 +21,14 @@ class NaiveBayesClassifier:
 
     train_data: []
     test_data: []
-
     classes: []
-    testObjs: []
+    samples: []
 
     def __init__(self, train_filename: str=None, test_filename: str=None):
         self.train_data = self.load(train_filename)
         self.test_data = self.load(test_filename)
         self.classes = []
-        self.testObjs = []
+        self.samples = []
 
     def load(self, file):
         line = ''
@@ -72,8 +71,14 @@ class NaiveBayesClassifier:
             else:
                 return 0
 
-    def train(self, data):
-        ### Training Phase ###
+    def train(self, data=[]):
+        """ Train a Gaussian Naive Bayes Classifier
+
+        :param data:
+        :type data:
+        :return:
+        :rtype:
+        """
         classNums = []
 
         # Determine # of classes
@@ -89,12 +94,13 @@ class NaiveBayesClassifier:
             c = self.Classifier(classID=i+1, prob=float(), attributes=[])
             self.classes.append(c)
 
-            for j in range(0, len(self.train_data[0].split()) - 1):
+            # Get number of columns in the data
+            for j in range(0, len(data[0].split()) - 1):
                 a = self.Attribute(attributeID=j+1, mean=float(), stdDev=float(), prob=float, values=[])
                 self.classes[i].attributes.append(a)
 
         # Find and file values to associated attribute object
-        for i in self.train_data:
+        for i in data:
             tempStr = i.split()
             temp = [float(x) for x in tempStr]
             clNum = int(temp[-1])
@@ -103,10 +109,8 @@ class NaiveBayesClassifier:
                 if (j.classID == clNum):
                     for index, k in enumerate(temp[:-1]):
                         j.attributes[index].values.append(k)
+                j.prob = len(j.attributes[0].values) / len(data)
 
-        # Calculate p(C)
-        for k in self.classes:
-            k.prob = len(k.attributes[0].values) / len(self.train_data)
 
         # Calulate mean and standard deviation for each attribute
         for i in self.classes:
@@ -148,11 +152,11 @@ class NaiveBayesClassifier:
             print("ID=%5d, predicted=%3d, probability = %.4f, true=%3d, accuracy=%4.2f" % (
             sample.id, sample.pClass, sample.prob, sample.tClass, sample.accuracy))
 
-            self.testObjs.append(sample)
+            self.samples.append(sample)
 
         # Calculate total accuracy
         accuracySum = 0
-        for i in self.testObjs:
+        for i in self.samples:
             accuracySum += i.accuracy
 
         return accuracySum
@@ -166,7 +170,7 @@ class NaiveBayesClassifier:
                 print("Class %d, attribute %d, mean = %.2f, std = %.2f" % (i.classID, j.attributeID, j.mean, j.stdDev))
             print()
 
-        print("\nclassification accuracy = %6.4f" % (accuracySum / len(self.testObjs)))
+        print("\nclassification accuracy = %6.4f" % (accuracySum / len(self.samples)))
 
 
 if __name__ == "__main__":
