@@ -24,19 +24,25 @@ class NaiveBayesClassifier:
     classes: []
     samples: []
 
-    def __init__(self, train_filename: str=None, test_filename: str=None):
+    def __init__(self, train_filename: str=None, test_filename: str=None) -> None:
+        """ Constructor for Naive Bayes Classifier object
+        Initialize training and test data and the class and sample lists.
+        """
         self.train_data = self.load(train_filename)
         self.test_data = self.load(test_filename)
         self.classes = []
         self.samples = []
 
-    def load(self, file):
-        line = ''
+    def load(self, file: str=None) -> []:
+        """ Load data from file
+        """
+        data = ''
         with open(file) as fp:
-            line = [line.rstrip('\n') for line in fp]
-        return line
+            data = [line.rstrip('\n') for line in fp]
+        return data
 
-    def find_stdDev(self, val, mean):
+    def find_stdDev(self, val: float, mean: float) -> float:
+        """ Get the standard deviation """
         sqrDiff = []
 
         for i in val:
@@ -48,12 +54,17 @@ class NaiveBayesClassifier:
 
         return math.sqrt(variance)
 
-    def calc_gaussian(self, x, mean, stdev):
+    def calc_gaussian(self, x: float, mean: float, stdev: float) -> float:
+        """ Calculate Gaussian """
         a = 1 / (stdev * math.sqrt(2 * math.pi))
         b = math.exp(-1 * (((x - mean) ** 2) / (2 * (stdev ** 2))))
         return a * b
 
-    def getAccuracy(self, classProbs, trueClass):
+    def getAccuracy(self, classProbs: [], trueClass: int) -> float:
+        """ Get the accuracy
+        Given the class probabilities and the true class labels,
+        calculate the accuracy of our classifier.
+        """
         maxes = []
 
         for i, prob in enumerate(classProbs):
@@ -71,7 +82,7 @@ class NaiveBayesClassifier:
             else:
                 return 0
 
-    def train(self, data=[]):
+    def train(self, data=[]) -> None:
         """ Train a Gaussian Naive Bayes Classifier
         """
         classNums = []
@@ -118,7 +129,9 @@ class NaiveBayesClassifier:
                     j.mean = stat.mean(j.values)
                 j.stdDev = self.find_stdDev(j.values, j.mean)
 
-    def classify(self, data):
+    def classify(self, data: []) -> float:
+        """ Classify data based on trained Naive Bayes"""
+
         for index, i in enumerate(data):
             tempStr = i.split()
             temp = [float(x) for x in tempStr]
@@ -157,7 +170,7 @@ class NaiveBayesClassifier:
 
         return accuracySum
 
-    def report(self, accuracySum):
+    def report(self, accuracySum: float) -> None:
         """ Report
         Print the results of the classificiation
         """
