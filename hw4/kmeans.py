@@ -11,9 +11,7 @@ from random import randint
 from scipy import stats
 from sklearn import metrics
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 import seaborn as sn
-# from PIL import Image
 
 # Type Hinting Libraries
 from nptyping import NDArray
@@ -60,7 +58,7 @@ class Kmeans:
     # TODO: SHOULD THIS REALLY BE A STATIC METHOD?
     # AGAIN - THIS SHOULD BE A ONE-LINER
     @staticmethod
-    def assign_clusters(distances: NDArray[float]) -> NDArray[float]:
+    def label_clusters(distances: NDArray[float]) -> NDArray[float]:
         """ Assign a label to a cluster """
         assignments = np.zeros([len(distances)])
 
@@ -89,7 +87,7 @@ class Kmeans:
             prev_clusters = []
             while True:
                 distances = self.all_euclidean_dist(tmp_centroids, self.train_data)
-                clusters = self.assign_clusters(distances)
+                clusters = self.label_clusters(distances)
 
                 # retrain centroids
                 for k in range(len(tmp_centroids)):
@@ -125,7 +123,7 @@ class Kmeans:
         Find the predictions for the centroids and the data
         """
         distance = self.all_euclidean_dist(centroids, data)
-        assignments = self.assign_clusters(distance)
+        assignments = self.label_clusters(distance)
         predictions = np.zeros(data.shape[0])
 
         for i in range(len(centroids)):
@@ -153,15 +151,15 @@ class Kmeans:
         """ Report Evaluations Results
         Report results from evaluation of test data and metrics on training
         """
-        print(f"Labeled Clusters:")
+        print(f"\n\nLabeled Clusters:")
         print(f"\t{self.labels.astype(int)}")
         print(f"Training Accuracy: {self.accuracy * 100:.2f}%")
         print(f"Testing  Accuracy: {test_accuracy * 100:.2f}%")
 
         print("\nTraining Metrics:")
         print(f"\tAverage Mean Square Error: {self.mean_square_error}")
-        print(f"\tMean Squiare Separation:   {self.mean_square_separation}")
-        print(f"\tMean Entropy: {self.mean_entropy}")
+        print(f"\tMean Square Separation:    {self.mean_square_separation}")
+        print(f"\tMean Entropy:              {self.mean_entropy}")
 
         print("\nTesting Metrics:")
         print("\nConfusion Matrix: ")
@@ -261,12 +259,6 @@ class Kmeans:
             for j in range(10):
                 ratios[j] = float(len(data[(assignment == i) & (data[:, -1] == j)])) / float(len(data[assignment == i]))
 
-            log_ratio = np.log2(ratios)
-            log_ratio[log_ratio == np.log2(0)] = 0
-            entropy[i] = -np.sum(ratios * log_ratio)
-            m_entropy += entropy[i] * len(data[assignment == i])
-
-        m_entropy /= len(data)
 
         return m_entropy
 
