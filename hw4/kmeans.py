@@ -153,7 +153,8 @@ class Kmeans:
         """ Report Evaluations Results
         Report results from evaluation of test data and metrics on training
         """
-        print("These are the corresponding labels for each cluster:", self.labels)
+        print(f"Labeled Clusters:")
+        print(f"\t{self.labels.astype(int)}")
         print(f"Training Accuracy: {self.accuracy * 100:.2f}%")
         print(f"Testing  Accuracy: {test_accuracy * 100:.2f}%")
 
@@ -166,7 +167,8 @@ class Kmeans:
         print("\nConfusion Matrix: ")
         print(confusion_matrix)
         # Confusion Matrix
-        df_cm = pd.DataFrame(confusion_matrix, range(len(self.labels)), range(len(self.labels)))
+        #df_cm = pd.DataFrame(confusion_matrix, range(len(self.labels)), range(len(self.labels)))
+        df_cm = pd.DataFrame(confusion_matrix, range(10), range(10))
         sn.set(font_scale=1.4)
         sn.heatmap(df_cm, annot=True, fmt='d', annot_kws={"size": 12})
         plt.title(f"K = {self.k}")
@@ -174,39 +176,23 @@ class Kmeans:
 
         # Show the Image
         for i in range(self.k):
-            print(f"self.labels[{i}]: {self.labels}")
             data = np.array(self.centroids[i, :]).reshape(8, 8)
-            #plt.imshow(data, interpolation='nearest', cmap='gray')
-
             extent = (0, data.shape[1], data.shape[0], 0)
-
             plt.imshow(X=data, cmap='gray', interpolation='none', extent=extent)
-
-            ax = plt.gca();
+            plt.title(f"K = {self.k},  Label = {int(self.labels[i])}")
+            ax = plt.gca()
 
             # Major ticks
             # ax.set_xticks(np.arange(0, 7, 1));
             # ax.set_yticks(np.arange(0, 7, 1));
-
-            ax.set_xticks(np.arange(1, 8, 1));
-            ax.set_yticks(np.arange(1, 8, 1));
+            ax.set_xticks(np.arange(1, 8, 1))
+            ax.set_yticks(np.arange(1, 8, 1))
 
             # Labels for major ticks
-            ax.set_xticklabels(np.arange(1, 8, 1));
-            ax.set_yticklabels(np.arange(1, 8, 1));
-
-            # # Minor ticks
-            ax.set_xticks(np.arange(-.5, 8, 1), minor=True);
-            ax.set_yticks(np.arange(-.5, 8, 1), minor=True);
-
-            # Gridlines based on minor ticks
-
-            # ax.grid(which='minor', color='w', linestyle='-', linewidth=2)
-
-
+            ax.set_xticklabels(np.arange(1, 8, 1))
+            ax.set_yticklabels(np.arange(1, 8, 1))
 
             plt.show()
-
 
     ####################################################################################
     # MATH SHIT ######################################################################
@@ -266,6 +252,10 @@ class Kmeans:
         ratios = np.zeros(10)
         entropy = np.zeros(self.k)
         m_entropy = 0
+
+        # https://stackoverflow.com/questions/21610198/runtimewarning-divide-by-zero-encountered-in-log
+        # np.seterr(divide = 'ignore')
+        # np.seterr(divide='warn')
 
         for i in range(self.k):
             for j in range(10):
