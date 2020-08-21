@@ -153,7 +153,7 @@ class Kmeans:
         """ Report Evaluations Results
         Report results from evaluation of test data and metrics on training
         """
-        # print("These are the corresponding labels for each cluster:", self.labels)
+        print("These are the corresponding labels for each cluster:", self.labels)
         print(f"Training Accuracy: {self.accuracy * 100:.2f}%")
         print(f"Testing  Accuracy: {test_accuracy * 100:.2f}%")
 
@@ -174,8 +174,37 @@ class Kmeans:
 
         # Show the Image
         for i in range(self.k):
+            print(f"self.labels[{i}]: {self.labels}")
             data = np.array(self.centroids[i, :]).reshape(8, 8)
-            plt.imshow(data, interpolation='nearest', cmap='gray')
+            #plt.imshow(data, interpolation='nearest', cmap='gray')
+
+            extent = (0, data.shape[1], data.shape[0], 0)
+
+            plt.imshow(X=data, cmap='gray', interpolation='none', extent=extent)
+
+            ax = plt.gca();
+
+            # Major ticks
+            # ax.set_xticks(np.arange(0, 7, 1));
+            # ax.set_yticks(np.arange(0, 7, 1));
+
+            ax.set_xticks(np.arange(1, 8, 1));
+            ax.set_yticks(np.arange(1, 8, 1));
+
+            # Labels for major ticks
+            ax.set_xticklabels(np.arange(1, 8, 1));
+            ax.set_yticklabels(np.arange(1, 8, 1));
+
+            # # Minor ticks
+            ax.set_xticks(np.arange(-.5, 8, 1), minor=True);
+            ax.set_yticks(np.arange(-.5, 8, 1), minor=True);
+
+            # Gridlines based on minor ticks
+
+            # ax.grid(which='minor', color='w', linestyle='-', linewidth=2)
+
+
+
             plt.show()
 
 
