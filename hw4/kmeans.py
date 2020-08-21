@@ -6,11 +6,13 @@
 
 import sys
 import numpy as np
+import pandas as pd
 from random import randint
 from scipy import stats
 from sklearn import metrics
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import seaborn as sn
 # from PIL import Image
 
 # Type Hinting Libraries
@@ -55,6 +57,18 @@ class Kmeans:
         data = np.loadtxt(datafile, delimiter=',')
         return data
 
+    # TODO: SHOULD THIS REALLY BE A STATIC METHOD?
+    # AGAIN - THIS SHOULD BE A ONE-LINER
+    @staticmethod
+    def assign_clusters(distances: NDArray[float]) -> NDArray[float]:
+        """ Assign a label to a cluster """
+        assignments = np.zeros([len(distances)])
+
+        for i in range(len(distances)):
+            assignments[i] = np.argmin(distances[i])
+
+        return assignments
+
     def train(self) -> NDArray[float]:
         """ Train K-means Clustering Model
         Choose the run (out of 5) that yields the smallest average mean-square-error (mse).
@@ -87,7 +101,7 @@ class Kmeans:
                 prev_clusters = clusters
 
             mss = self.find_sss(tmp_centroids)
-            mse = self.find_sse(tmp_centroids, self.train_data, clusters)
+            mse = self.average_mean_square_error(tmp_centroids, self.train_data, clusters)
 
             # Choose the run (out of 5) that yields the smallest average mean-square-error (mse)
             if self.mean_square_error < mse_prev or mse_prev == 0:
@@ -105,8 +119,6 @@ class Kmeans:
         # The centriods are "the model" for k-means
         return self.centroids
 
-    ####################################################################################
-    # TODO: RENAME METHOD
     def predict(self, centroids: NDArray[float], data: NDArray[float], labels: NDArray[float]) -> (NDArray[float], NDArray[float]):
         """ Predict the centroids
         REWORD
@@ -121,6 +133,93 @@ class Kmeans:
             predictions[assignments == i] = labels[i]
 
         return labels, predictions
+
+    def evaluate(self, data: NDArray[float]) -> (float, NDArray[float]):
+        """ Evalute Clustering Model
+        """
+
+        # Run the testing data against the clusters and gain predictions
+        _, predictions = self.predict(self.centroids, data, self.labels)
+
+        # The accuracy for the testing data
+        acc = metrics.accuracy_score(data[:, -1], predictions)
+
+        # Confusion matrix!
+        confusion_matrix = metrics.confusion_matrix(data[:, -1], predictions)
+
+        return acc, confusion_matrix
+
+    def report(self, test_accuracy: float, confusion_matrix: [[]]) -> None:
+        """ Report Evaluations Results
+        Report results from evaluation of test data and metrics on training
+        """
+        # print("These are the corresponding labels for each cluster:", self.labels)
+        print(f"Training Accuracy: {self.accuracy * 100:.2f}%")
+        print(f"Testing  Accuracy: {test_accuracy * 100:.2f}%")
+
+        print("\nTraining Metrics:")
+        print(f"\tAverage Mean Square Error: {self.mean_square_error}")
+        print(f"\tMean Squiare Separation:   {self.mean_square_separation}")
+        print(f"\tMean Entropy: {self.mean_entropy}")
+
+        print("\nTesting Metrics:")
+        print("\nConfusion Matrix: ")
+        print(confusion_matrix)
+        # Confusion Matrix
+        df_cm = pd.DataFrame(confusion_matrix, range(len(self.labels)), range(len(self.labels)))
+        sn.set(font_scale=1.4)
+        sn.heatmap(df_cm, annot=True, fmt='d', annot_kws={"size": 12})
+        plt.title(f"K = {self.k}")
+        plt.show()
+
+        if self.k == 10:
+            for i in range(self.k):
+                plt.imsave('exp1_image_%i.png' % i, np.array(self.centroids[i, :]).reshape(8, 8), cmap=cm.gray)
+
+
+                data = np.array(self.centroids[i, :]).reshape(8, 8)
+
+                #data = np.asarray(self.centroids[i, :], dtype="uint8")
+                #data = np.array(self.centroids[i, :]).reshape(16, 16)
+                #data = np.array(self.centroids[i, :])
+                #from matplotlib import pyplot as plt
+                #data = np.uint8
+
+                plt.imshow(data, interpolation='nearest', cmap='gray')
+                plt.show()
+
+                # #plt.show()
+                #
+                # #plt.imshow(np.array(self.centroids[i, :]), cmap='Greys')
+                #
+                # # im = np.random.randint(0, 255, (16, 16))
+                # # I = np.dstack([im, im, im])
+                # # x = 5
+                # # y = 5
+                # # I[x, y, :] = [1, 0, 0]
+                # # plt.imshow(I, interpolation='nearest')
+                # # plt.imshow(im, interpolation='nearest', cmap='Greys')
+                #
+                # # np.uint8
+                #
+                # from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+                # from matplotlib.figure import Figure
+                #
+                # fig = Figure()
+                # canvas = FigureCanvas(fig)
+                # ax = fig.gca()
+                #
+                # ax.text(0.0, 0.0, "Test", fontsize=45)
+                # ax.axis('off')
+                #
+                # canvas.draw()  # draw the canvas, cache the renderer
+                #
+                # # image = np.fromstring(canvas.tostring_rgb(), dtype='uint8')
+                # # image = np.fromstring(canvas.tostring_rgb(), dtype='uint8')
+                # image = np.frombuffer(canvas.tostring_rgb(), dtype='uint8')
+        if self.k == 30:
+            for i in range(self.k):
+                plt.imsave('exp2_image_%i.png' % i, np.array(self.centroids[i, :]).reshape(8, 8), cmap=cm.gray)
 
     ####################################################################################
     # MATH SHIT ######################################################################
@@ -145,16 +244,17 @@ class Kmeans:
 
         return all_e_dist
 
-    def find_sse(self, centroids: NDArray[float], data: NDArray[float], assign) -> float:
-        """ Sum of Squares Error
-        Calculate the Sum of Squares Error of all the centroids """
+    def average_mean_square_error(self, centroids: NDArray[float], data: NDArray[float], assign) -> float:
+        """ Average Mean Square Error
+        Calculate the Average Mean Square Error of the resulting clustering on the training data
+        """
 
-        sse = 0
+        mse = 0
 
         for i in range(self.k):
-            sse += np.sum(self.euclidean_dist(centroids[i], data[assign == i, :-1]) ** 2)
+            mse += np.sum(self.euclidean_dist(centroids[i], data[assign == i, :-1]) ** 2)
 
-        return sse
+        return mse
 
     def find_sss(self, centroids: NDArray[float]) -> float:
         """ Mean Sum of Separation
@@ -194,57 +294,6 @@ class Kmeans:
         return m_entropy
 
     ####################################################################################
-
-    # TODO: SHOULD THIS REALLY BE A STATIC METHOD?
-    # AGAIN - THIS SHOULD BE A ONE-LINER
-    @staticmethod
-    def assign_clusters(distances: NDArray[float]) -> NDArray[float]:
-        """ Assign a label to a cluster """
-
-        assignments = np.zeros([len(distances)])
-
-        for i in range(len(distances)):
-            assignments[i] = np.argmin(distances[i])
-
-        return assignments
-
-    def evaluate(self, data: NDArray[float]) -> (float, NDArray[float]):
-        """ Evalute Clustering Model
-        """
-
-        # Run the testing data against the clusters and gain predictions
-        #predictions = self.pred_test_results(self.centroids, data, self.labels)
-        _, predictions = self.predict(self.centroids, data, self.labels)
-
-        # The accuracy for the testing data
-        acc = metrics.accuracy_score(data[:, -1], predictions)
-
-        # Confusion matrix!
-        confusion_matrix = metrics.confusion_matrix(data[:, -1], predictions)
-
-        return acc, confusion_matrix
-
-    def report(self, test_accuracy: float, confusion_matrix: [[]]) -> None:
-        """ Report Evaluations Results
-        Report results from evaluation of test data and metrics on training
-        """
-        print("These are the corresponding labels for each cluster:", self.labels)
-        print("This is the accuracy for the training data: ", self.accuracy * 100)
-        print("This is the accuracy for the testing data: ", test_accuracy * 100)
-
-        print("This is the best SSS: ", self.mean_square_separation)
-        print("This is the best SSE: ", self.mean_square_error)
-        print("The mean Entropy is: ", self.mean_entropy)
-
-        print("The confusion matrix: ")
-        print(confusion_matrix)
-
-        if self.k == 10:
-            for i in range(self.k):
-                plt.imsave('exp1_image_%i.png' % i, np.array(self.centroids[i, :]).reshape(8, 8), cmap=cm.gray)
-        if self.k == 30:
-            for i in range(self.k):
-                plt.imsave('exp2_image_%i.png' % i, np.array(self.centroids[i, :]).reshape(8, 8), cmap=cm.gray)
 
 
 if __name__ == "__main__":
