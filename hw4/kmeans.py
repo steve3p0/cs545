@@ -172,54 +172,12 @@ class Kmeans:
         plt.title(f"K = {self.k}")
         plt.show()
 
-        if self.k == 10:
-            for i in range(self.k):
-                plt.imsave('exp1_image_%i.png' % i, np.array(self.centroids[i, :]).reshape(8, 8), cmap=cm.gray)
+        # Show the Image
+        for i in range(self.k):
+            data = np.array(self.centroids[i, :]).reshape(8, 8)
+            plt.imshow(data, interpolation='nearest', cmap='gray')
+            plt.show()
 
-
-                data = np.array(self.centroids[i, :]).reshape(8, 8)
-
-                #data = np.asarray(self.centroids[i, :], dtype="uint8")
-                #data = np.array(self.centroids[i, :]).reshape(16, 16)
-                #data = np.array(self.centroids[i, :])
-                #from matplotlib import pyplot as plt
-                #data = np.uint8
-
-                plt.imshow(data, interpolation='nearest', cmap='gray')
-                plt.show()
-
-                # #plt.show()
-                #
-                # #plt.imshow(np.array(self.centroids[i, :]), cmap='Greys')
-                #
-                # # im = np.random.randint(0, 255, (16, 16))
-                # # I = np.dstack([im, im, im])
-                # # x = 5
-                # # y = 5
-                # # I[x, y, :] = [1, 0, 0]
-                # # plt.imshow(I, interpolation='nearest')
-                # # plt.imshow(im, interpolation='nearest', cmap='Greys')
-                #
-                # # np.uint8
-                #
-                # from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-                # from matplotlib.figure import Figure
-                #
-                # fig = Figure()
-                # canvas = FigureCanvas(fig)
-                # ax = fig.gca()
-                #
-                # ax.text(0.0, 0.0, "Test", fontsize=45)
-                # ax.axis('off')
-                #
-                # canvas.draw()  # draw the canvas, cache the renderer
-                #
-                # # image = np.fromstring(canvas.tostring_rgb(), dtype='uint8')
-                # # image = np.fromstring(canvas.tostring_rgb(), dtype='uint8')
-                # image = np.frombuffer(canvas.tostring_rgb(), dtype='uint8')
-        if self.k == 30:
-            for i in range(self.k):
-                plt.imsave('exp2_image_%i.png' % i, np.array(self.centroids[i, :]).reshape(8, 8), cmap=cm.gray)
 
     ####################################################################################
     # MATH SHIT ######################################################################
