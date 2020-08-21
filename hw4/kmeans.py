@@ -40,9 +40,8 @@ class Kmeans:
         self.train_data = self.__load(trainfile)
         self.test_data = self.__load(testfile)
 
-        # self.centroids = NDArray[float]
         self.centroids = np.zeros(self.k)
-        # self.labels = NDArray[float]
+        self.labels = np.zeros(self.k)
 
         self.mean_square_error = 0.0
         self.mean_square_separation = 0.0
@@ -68,9 +67,6 @@ class Kmeans:
 
         for i in range(5):
             # Get everything in the training data, except the last column
-            # https://stackoverflow.com/questions/26146953/list-comprehension-like-approach-for-numpy-arrays-with-more-than-one-dimension
-            # new_array = np.array([x[:,np.random.randint(0, x.shape[1])] for x in list_of_arrays]).T
-            # new_array = np.array([random.choice(x.T) for x in list_of_arrays]).T
             tmp_centroids = np.zeros([self.k, 64], dtype=float)
             for j in range(len(tmp_centroids)):
                 tmp_centroids[j] = self.train_data[(randint(0, len(self.train_data))), :-1]
@@ -103,7 +99,7 @@ class Kmeans:
 
         # Save metrics for training
         self.mean_entropy = self.find_entropy(self.train_data, clusters)
-        self.labels, self.predictions = self.predict(self.train_data)
+        self.labels, self.predictions = self.predict(self.centroids, self.train_data, self.labels)
         self.accuracy = metrics.accuracy_score(self.train_data[:, -1], self.predictions)
 
         # The centriods are "the model" for k-means
@@ -111,34 +107,20 @@ class Kmeans:
 
     ####################################################################################
     # TODO: RENAME METHOD
-    def predict(self, data: NDArray[float]) -> (NDArray[float], NDArray[float]):
+    def predict(self, centroids: NDArray[float], data: NDArray[float], labels: NDArray[float]) -> (NDArray[float], NDArray[float]):
         """ Predict the centroids
         REWORD
-        Find the predictions for the centroids and the data almost the same as pred_test_results
+        Find the predictions for the centroids and the data
         """
-        distance = self.all_euclidean_dist(self.centroids, data)
-        assignments = self.assign_clusters(distance)
-        centroid_labels = np.zeros(self.k)
-        predictions = np.zeros(data.shape[0])
-
-        for i in range(len(self.centroids)):
-            centroid_labels[i] = stats.mode(data[assignments == i, -1])[0]
-            predictions[assignments == i] = centroid_labels[i]
-
-        return centroid_labels, predictions
-
-    # TODO: SEE IF YOU CAN RE-USE THE predict() method above
-    def pred_test_results(self, centroids: NDArray[float], data: NDArray[float], labels: NDArray[float]) -> NDArray[float]:
-        """ Predict where what cluster the test data is in """
-
         distance = self.all_euclidean_dist(centroids, data)
         assignments = self.assign_clusters(distance)
-        test_predictions = np.zeros(data.shape[0])
+        predictions = np.zeros(data.shape[0])
 
         for i in range(len(centroids)):
-            test_predictions[assignments == i] = labels[i]
+            labels[i] = stats.mode(data[assignments == i, -1])[0]
+            predictions[assignments == i] = labels[i]
 
-        return test_predictions
+        return labels, predictions
 
     ####################################################################################
     # MATH SHIT ######################################################################
@@ -231,7 +213,8 @@ class Kmeans:
         """
 
         # Run the testing data against the clusters and gain predictions
-        predictions = self.pred_test_results(self.centroids, data, self.labels)
+        #predictions = self.pred_test_results(self.centroids, data, self.labels)
+        _, predictions = self.predict(self.centroids, data, self.labels)
 
         # The accuracy for the testing data
         acc = metrics.accuracy_score(data[:, -1], predictions)
