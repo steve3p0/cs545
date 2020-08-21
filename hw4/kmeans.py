@@ -23,16 +23,16 @@ class Kmeans:
     """
 
     k: int
-    train_data: []
-    test_data: []
-    centroids: []
-    labels: []
+    train_data: NDArray[float]
+    test_data: NDArray[float]
+    centroids: NDArray[float]
+    labels: NDArray[int]
 
     mean_square_error: float
     mean_square_separation: float
     mean_entropy: float
     accuracy: float
-    predictions: float
+    predictions: NDArray[float]
 
     def __init__(self, k, trainfile: str = None, testfile: str = None):
         """ Constructor for Kmeans object """
@@ -40,17 +40,17 @@ class Kmeans:
         self.train_data = self.load(trainfile)
         self.test_data = self.load(testfile)
 
-        self.centroids = []
-        self.labels = []
+        self.centroids = NDArray[float]
+        self.labels = NDArray[float]
 
         self.mean_square_error = 0.0
         self.mean_square_separation = 0.0
         self.mean_entropy = 0.0
         self.accuracy = 0.0
-        self.predictions = 0.0
+        self.predictions = NDArray[float]
 
     @staticmethod
-    def load(datafile: str) -> []:
+    def load(datafile: str) -> NDArray[Any, Any]:
         """ Load the data from a file """
 
         data = np.loadtxt(datafile, delimiter=',')
@@ -60,7 +60,7 @@ class Kmeans:
     ####################################################################################
     # TRAINING FUNCTIONS #############################################################
     # Find the best cluster out of 5 randomly generated centroids
-    def train(self) -> [float]:
+    def train(self) -> NDArray[float]:
         """ Train K-means Clustering Model
         Returns a set of centroids
         """
@@ -95,7 +95,7 @@ class Kmeans:
 
         return self.centroids
 
-    def retrain_centroids(self, centroids, assignments, data) -> [float]:
+    def retrain_centroids(self, centroids: NDArray[float], assignments: NDArray[float], data: NDArray[float]) -> NDArray[float]:
         """ Retrain Centroids
         TODO: Rewrite - Find new centroids based on their assignments and data
         """
@@ -105,7 +105,7 @@ class Kmeans:
 
         return centroids
 
-    def create_centroids(self, train_data: []) -> [float]:
+    def create_centroids(self, train_data: NDArray[float]) -> NDArray[float]:
         """ Create Centroids
         Basic creation of centroids from the data
         """
@@ -117,7 +117,7 @@ class Kmeans:
 
         return centroids
 
-    def train_centroids(self, centroids: NDArray[float], data: NDArray[float]) -> ([], []):
+    def train_centroids(self, centroids: NDArray[float], data: NDArray[float]) -> (NDArray[float], NDArray[float]):
         """ Train Centroids
         The initial "train" or making new centroids based on the data
         """
@@ -130,7 +130,7 @@ class Kmeans:
 
     ####################################################################################
     # TODO: RENAME METHOD
-    def predict(self, data: NDArray[float]) -> ([], []):
+    def predict(self, data: NDArray[float]) -> (NDArray[float], NDArray[float]):
         """ Predict the centroids
         REWORD
         Find the predictions for the centroids and the data almost the same as pred_test_results
@@ -146,7 +146,7 @@ class Kmeans:
 
         return centroid_labels, predictions
 
-    def pred_test_results(self, centroids: NDArray[float], data: NDArray[float], labels: []) -> []:
+    def pred_test_results(self, centroids: NDArray[float], data: NDArray[float], labels: NDArray[float]) -> NDArray[float]:
         """ Predict where what cluster the test data is in """
 
         distance = self.all_euclidean_dist(centroids, data)
@@ -162,17 +162,17 @@ class Kmeans:
     # MATH SHIT ######################################################################
 
     @staticmethod
-    def euclidean_dist(centroid: float, data_point: float) -> float:
+    def euclidean_dist(centroids: NDArray[float], data: NDArray[float]) -> NDArray[float]:
         """ Euclidean Distance
         Calculate the Eculidean distance of a data point and a centroid
         """
 
-        row = np.sqrt(np.sum((centroid - data_point) ** 2, axis=1))
+        row = np.sqrt(np.sum((centroids - data) ** 2, axis=1))
 
         return row
 
     #def all_euclidean_dist(self, centroids: [], data: []) -> NDArray[Any, Any]:
-    def all_euclidean_dist(self, centroids: [], data: []) -> NDArray[float]:
+    def all_euclidean_dist(self, centroids: NDArray[float], data: NDArray[float]) -> NDArray[float]:
         """ Euclidean distances of all data """
         all_e_dist = np.zeros([len(data), len(centroids)])
 
@@ -181,7 +181,7 @@ class Kmeans:
 
         return all_e_dist
 
-    def find_sse(self, centroids: [], data: [], assign) -> float:
+    def find_sse(self, centroids: NDArray[float], data: NDArray[float], assign) -> float:
         """ Sum of Squares Error
         Calculate the Sum of Squares Error of all the centroids """
 
@@ -192,7 +192,7 @@ class Kmeans:
 
         return sse
 
-    def find_sss(self, centroids: []) -> float:
+    def find_sss(self, centroids: NDArray[float]) -> float:
         """ Mean Sum of Separation
         Find the SSS of the centroids.
         """
@@ -207,7 +207,7 @@ class Kmeans:
 
         return sss
 
-    def find_entropy(self, data: [], assignment: [int]) -> float:
+    def find_entropy(self, data: NDArray[float], assignment: NDArray[float]) -> float:
         """ Find the Mean Entropy
         Find the Entropy of each cluster
         """
@@ -232,7 +232,7 @@ class Kmeans:
     ####################################################################################
 
     @staticmethod
-    def assign_clusters(distances) -> []:
+    def assign_clusters(distances: NDArray[float]) -> NDArray[float]:
         """ Assign a label to a cluster """
 
         assignments = np.zeros([len(distances)])
@@ -242,7 +242,7 @@ class Kmeans:
 
         return assignments
 
-    def evaluate(self, data: []) -> (float, []):
+    def evaluate(self, data: NDArray[float]) -> (float, NDArray[float]):
         """ Evalute Clustering Model
         """
 
