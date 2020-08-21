@@ -41,6 +41,7 @@ class Kmeans:
         self.test_data = self.__load(testfile)
 
         # self.centroids = NDArray[float]
+        self.centroids = np.zeros(self.k)
         # self.labels = NDArray[float]
 
         self.mean_square_error = 0.0
@@ -57,36 +58,44 @@ class Kmeans:
 
     def train(self) -> NDArray[float]:
         """ Train K-means Clustering Model
-        Choose the run (out of 5) that yields the smallest average mean-square-error (mse)
+        Choose the run (out of 5) that yields the smallest average mean-square-error (mse).
+        Repeat the following 5 times, with different random number seeds to compute the
+        original (random) cluster centers
         """
+
         mse_prev = 0
         clusters = []
-        self.centroids = np.zeros(self.k)
 
-        # Repeat the following 5 times, with different random number seeds to compute the
-        # original (random) cluster centers
         for i in range(5):
             # Get everything in the training data, except the last column
-            cds = self.create_centroids(self.train_data[:, :-1])
+            # https://stackoverflow.com/questions/26146953/list-comprehension-like-approach-for-numpy-arrays-with-more-than-one-dimension
+            # new_array = np.array([x[:,np.random.randint(0, x.shape[1])] for x in list_of_arrays]).T
+            # new_array = np.array([random.choice(x.T) for x in list_of_arrays]).T
+            tmp_centroids = np.zeros([self.k, 64], dtype=float)
+            for j in range(len(tmp_centroids)):
+                tmp_centroids[j] = self.train_data[(randint(0, len(self.train_data))), :-1]
 
             # Stop iterating K-Means when all cluster centers stop changing.
             prev_clusters = []
             while True:
-                distances = self.all_euclidean_dist(cds, self.train_data)
+                distances = self.all_euclidean_dist(tmp_centroids, self.train_data)
                 clusters = self.assign_clusters(distances)
-                cds = self.retrain_centroids(cds, clusters, self.train_data)
+
+                # retrain centroids
+                for k in range(len(tmp_centroids)):
+                    tmp_centroids[k] = np.mean(self.train_data[clusters == k, :-1], axis=0)
 
                 # if there is no change in the cluster, stop!
                 if np.array_equal(prev_clusters, clusters):
                     break
                 prev_clusters = clusters
 
-            mss = self.find_sss(cds)
-            mse = self.find_sse(cds, self.train_data, clusters)
+            mss = self.find_sss(tmp_centroids)
+            mse = self.find_sse(tmp_centroids, self.train_data, clusters)
 
             # Choose the run (out of 5) that yields the smallest average mean-square-error (mse)
             if self.mean_square_error < mse_prev or mse_prev == 0:
-                self.centroids = cds
+                self.centroids = tmp_centroids
                 self.mean_square_separation = mss
                 self.mean_square_error = mse
 
@@ -99,32 +108,6 @@ class Kmeans:
 
         # The centriods are "the model" for k-means
         return self.centroids
-
-    def retrain_centroids(self, centroids: NDArray[float], assignments: NDArray[float], data: NDArray[float]) -> NDArray[float]:
-        """ Retrain Centroids
-        Adjust locations of centroids to be more centrally located in their
-        respective clusters.
-        """
-
-        for i in range(len(centroids)):
-            # TODO: WTF FUCK DOES THIS DO?
-            # np.where(self.cluster == i)
-            centroids[i] = np.mean(data[assignments == i, :-1], axis=0)
-            #centroids[i] = np.mean(data[np.where(assignments == i), :-1], axis=0)
-
-        return centroids
-
-    def create_centroids(self, train_data: NDArray[float]) -> NDArray[float]:
-        """ Create Centroids
-        Basic creation of centroids from the data
-        """
-
-        centroids = np.zeros([self.k, 64], dtype=float)
-
-        for i in range(len(centroids)):
-            centroids[i] = train_data[(randint(0, len(train_data))), :]
-
-        return centroids
 
     ####################################################################################
     # TODO: RENAME METHOD
@@ -144,6 +127,7 @@ class Kmeans:
 
         return centroid_labels, predictions
 
+    # TODO: SEE IF YOU CAN RE-USE THE predict() method above
     def pred_test_results(self, centroids: NDArray[float], data: NDArray[float], labels: NDArray[float]) -> NDArray[float]:
         """ Predict where what cluster the test data is in """
 
@@ -229,6 +213,8 @@ class Kmeans:
 
     ####################################################################################
 
+    # TODO: SHOULD THIS REALLY BE A STATIC METHOD?
+    # AGAIN - THIS SHOULD BE A ONE-LINER
     @staticmethod
     def assign_clusters(distances: NDArray[float]) -> NDArray[float]:
         """ Assign a label to a cluster """
