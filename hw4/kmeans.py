@@ -37,8 +37,8 @@ class Kmeans:
     def __init__(self, k, trainfile: str = None, testfile: str = None):
         """ Constructor for Kmeans object """
         self.k = k
-        self.train_data = self.load(trainfile)
-        self.test_data = self.load(testfile)
+        self.train_data = self.__load(trainfile)
+        self.test_data = self.__load(testfile)
 
         # self.centroids = NDArray[float]
         # self.labels = NDArray[float]
@@ -50,7 +50,7 @@ class Kmeans:
         # self.predictions = NDArray[float]
 
     @staticmethod
-    def load(datafile: str) -> NDArray[Any, Any]:
+    def __load(datafile: str) -> NDArray[Any, Any]:
         """ Load the data from a file """
         data = np.loadtxt(datafile, delimiter=',')
         return data
@@ -60,7 +60,7 @@ class Kmeans:
         Choose the run (out of 5) that yields the smallest average mean-square-error (mse)
         """
         mse_prev = 0
-        assignments = []
+        clusters = []
         self.centroids = np.zeros(self.k)
 
         # Repeat the following 5 times, with different random number seeds to compute the
@@ -69,12 +69,20 @@ class Kmeans:
             # Get everything in the training data, except the last column
             cds = self.create_centroids(self.train_data[:, :-1])
 
-            # TODO: Why range of 100?
-            for i in range(100):
-                cds, assignments = self.train_centroids(cds, self.train_data)
+            # Stop iterating K-Means when all cluster centers stop changing.
+            prev_clusters = []
+            while True:
+                distances = self.all_euclidean_dist(cds, self.train_data)
+                clusters = self.assign_clusters(distances)
+                cds = self.retrain_centroids(cds, clusters, self.train_data)
+
+                # if there is no change in the cluster, stop!
+                if np.array_equal(prev_clusters, clusters):
+                    break
+                prev_clusters = clusters
 
             mss = self.find_sss(cds)
-            mse = self.find_sse(cds, self.train_data, assignments)
+            mse = self.find_sse(cds, self.train_data, clusters)
 
             # Choose the run (out of 5) that yields the smallest average mean-square-error (mse)
             if self.mean_square_error < mse_prev or mse_prev == 0:
@@ -85,32 +93,24 @@ class Kmeans:
             mse_prev = mse
 
         # Save metrics for training
-        self.mean_entropy = self.find_entropy(self.train_data, assignments)
+        self.mean_entropy = self.find_entropy(self.train_data, clusters)
         self.labels, self.predictions = self.predict(self.train_data)
         self.accuracy = metrics.accuracy_score(self.train_data[:, -1], self.predictions)
 
-        # The centrioids are "the model" for k-means
+        # The centriods are "the model" for k-means
         return self.centroids
-
-    def train_centroids(self, centroids: NDArray[float], data: NDArray[float]) -> (NDArray[float], NDArray[float]):
-        """ Train Centroids
-        Do the initail training of the
-        TODO: (REWRITE) The initial "train" or making new centroids based on the data
-        """
-
-        distances = self.all_euclidean_dist(centroids, data)
-        assignments = self.assign_clusters(distances)
-        centroids = self.retrain_centroids(centroids, assignments, data)
-
-        return centroids, assignments
 
     def retrain_centroids(self, centroids: NDArray[float], assignments: NDArray[float], data: NDArray[float]) -> NDArray[float]:
         """ Retrain Centroids
-        TODO: Rewrite - Find new centroids based on their assignments and data
+        Adjust locations of centroids to be more centrally located in their
+        respective clusters.
         """
 
         for i in range(len(centroids)):
+            # TODO: WTF FUCK DOES THIS DO?
+            # np.where(self.cluster == i)
             centroids[i] = np.mean(data[assignments == i, :-1], axis=0)
+            #centroids[i] = np.mean(data[np.where(assignments == i), :-1], axis=0)
 
         return centroids
 
