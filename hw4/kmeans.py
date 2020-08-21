@@ -40,47 +40,43 @@ class Kmeans:
         self.train_data = self.load(trainfile)
         self.test_data = self.load(testfile)
 
-        self.centroids = NDArray[float]
-        self.labels = NDArray[float]
+        # self.centroids = NDArray[float]
+        # self.labels = NDArray[float]
 
         self.mean_square_error = 0.0
         self.mean_square_separation = 0.0
         self.mean_entropy = 0.0
         self.accuracy = 0.0
-        self.predictions = NDArray[float]
+        # self.predictions = NDArray[float]
 
     @staticmethod
     def load(datafile: str) -> NDArray[Any, Any]:
         """ Load the data from a file """
-
         data = np.loadtxt(datafile, delimiter=',')
-
         return data
 
-    ####################################################################################
-    # TRAINING FUNCTIONS #############################################################
-    # Find the best cluster out of 5 randomly generated centroids
     def train(self) -> NDArray[float]:
         """ Train K-means Clustering Model
-        Returns a set of centroids
+        Choose the run (out of 5) that yields the smallest average mean-square-error (mse)
         """
         mse_prev = 0
         assignments = []
         self.centroids = np.zeros(self.k)
 
-        # TODO: this range shouldn't be fixed?
-        # DO UNTIL?
+        # Repeat the following 5 times, with different random number seeds to compute the
+        # original (random) cluster centers
         for i in range(5):
+            # Get everything in the training data, except the last column
             cds = self.create_centroids(self.train_data[:, :-1])
 
-            # BIG FUCKING NO-NO
+            # TODO: Why range of 100?
             for i in range(100):
                 cds, assignments = self.train_centroids(cds, self.train_data)
 
             mss = self.find_sss(cds)
             mse = self.find_sse(cds, self.train_data, assignments)
 
-            # if we have a reduction in error, safe the model
+            # Choose the run (out of 5) that yields the smallest average mean-square-error (mse)
             if self.mean_square_error < mse_prev or mse_prev == 0:
                 self.centroids = cds
                 self.mean_square_separation = mss
@@ -88,12 +84,25 @@ class Kmeans:
 
             mse_prev = mse
 
+        # Save metrics for training
         self.mean_entropy = self.find_entropy(self.train_data, assignments)
-
         self.labels, self.predictions = self.predict(self.train_data)
         self.accuracy = metrics.accuracy_score(self.train_data[:, -1], self.predictions)
 
+        # The centrioids are "the model" for k-means
         return self.centroids
+
+    def train_centroids(self, centroids: NDArray[float], data: NDArray[float]) -> (NDArray[float], NDArray[float]):
+        """ Train Centroids
+        Do the initail training of the
+        TODO: (REWRITE) The initial "train" or making new centroids based on the data
+        """
+
+        distances = self.all_euclidean_dist(centroids, data)
+        assignments = self.assign_clusters(distances)
+        centroids = self.retrain_centroids(centroids, assignments, data)
+
+        return centroids, assignments
 
     def retrain_centroids(self, centroids: NDArray[float], assignments: NDArray[float], data: NDArray[float]) -> NDArray[float]:
         """ Retrain Centroids
@@ -116,17 +125,6 @@ class Kmeans:
             centroids[i] = train_data[(randint(0, len(train_data))), :]
 
         return centroids
-
-    def train_centroids(self, centroids: NDArray[float], data: NDArray[float]) -> (NDArray[float], NDArray[float]):
-        """ Train Centroids
-        The initial "train" or making new centroids based on the data
-        """
-
-        distances = self.all_euclidean_dist(centroids, data)
-        assignments = self.assign_clusters(distances)
-        centroids = self.retrain_centroids(centroids, assignments, data)
-
-        return centroids, assignments
 
     ####################################################################################
     # TODO: RENAME METHOD
