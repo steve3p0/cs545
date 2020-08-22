@@ -202,18 +202,34 @@ class Kmeans:
         """
 
         row = np.sqrt(np.sum((centroids - data) ** 2, axis=1))
+        # row = np.sqrt((centroids - data) ** 2)
+        # row = np.sum((centroids - data) ** 2, axis=1)
+        # row = np.sqrt(np.sum((centroids - data), axis=1))
 
         return row
 
     #def all_euclidean_dist(self, centroids: [], data: []) -> NDArray[Any, Any]:
     def all_euclidean_dist(self, centroids: NDArray[float], data: NDArray[float]) -> NDArray[float]:
         """ Euclidean distances of all data """
+
+        # #dist = numpy.linalg.norm(a - b)
+        # a = centroids
+        # b = data[:, :-1]
+        # all_e_dist = np.linalg.norm(a - b)
+
         all_e_dist = np.zeros([len(data), len(centroids)])
 
         for i in range(len(centroids)):
             all_e_dist[:, i] = self.euclidean_dist(centroids[i, :], data[:, :-1])
 
         return all_e_dist
+
+        # all_e_dist = np.zeros([len(data), len(centroids)])
+        #
+        # for i in range(len(centroids)):
+        #     all_e_dist[:, i] = np.linalg.norm(centroids[i, :] - data[:, :-1])
+        #
+        # return all_e_dist
 
     def average_mean_square_error(self, centroids: NDArray[float], data: NDArray[float], assign) -> float:
         """ Average Mean Square Error
@@ -223,7 +239,8 @@ class Kmeans:
         mse = 0
 
         for i in range(self.k):
-            mse += np.sum(self.euclidean_dist(centroids[i], data[assign == i, :-1]) ** 2)
+            # mse += np.sum(self.euclidean_dist(centroids[i], data[assign == i, :-1]) ** 2)
+            mse += np.sum(self.euclidean_dist(centroids[i], data[assign == i, :-1]))
 
         return mse
 
@@ -238,9 +255,27 @@ class Kmeans:
             for j in range(self.k):
                 sss = sss + (centroids[i] - centroids[j]) ** 2
 
+
         sss = np.sum(sss)
 
-        return sss
+        mss = sss / ((self.k * (self.k - 1)) / 2)
+
+        return mss
+
+    # def find_sss(self, centroids: NDArray[float]) -> float:
+    #     """ Mean Sum of Separation
+    #     Find the SSS of the centroids.
+    #     """
+    #
+    #     sss = 0.0
+    #
+    #     for i in range(self.k):
+    #         for j in range(self.k):
+    #             sss = sss + (centroids[i] - centroids[j]) ** 2
+    #
+    #     sss = np.sum(sss)
+    #
+    #     return sss
 
     def find_entropy(self, data: NDArray[float], assignment: NDArray[float]) -> float:
         """ Find the Mean Entropy
@@ -258,7 +293,12 @@ class Kmeans:
         for i in range(self.k):
             for j in range(10):
                 ratios[j] = float(len(data[(assignment == i) & (data[:, -1] == j)])) / float(len(data[assignment == i]))
+            log_ratio = np.log2(ratios)
+            log_ratio[log_ratio == np.log2(0)] = 0
+            entropy[i] = -np.sum(ratios * log_ratio)
+            m_entropy += entropy[i] * len(data[assignment == i])
 
+        m_entropy /= len(data)
 
         return m_entropy
 
