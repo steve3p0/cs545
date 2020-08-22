@@ -86,7 +86,7 @@ class Kmeans:
             # Stop iterating K-Means when all cluster centers stop changing.
             prev_clusters = []
             while True:
-                distances = self.all_euclidean_dist(tmp_centroids, self.train_data)
+                distances = self.euclidean_distance(tmp_centroids, self.train_data)
                 clusters = self.label_clusters(distances)
 
                 # retrain centroids
@@ -110,7 +110,7 @@ class Kmeans:
             mse_prev = mse
 
         # Save metrics for training
-        self.mean_entropy = self.find_entropy(self.train_data, clusters)
+        self.mean_entropy = self.calc_mean_entropy(self.train_data, clusters)
         self.labels, self.predictions = self.predict(self.centroids, self.train_data, self.labels)
         self.accuracy = metrics.accuracy_score(self.train_data[:, -1], self.predictions)
 
@@ -122,7 +122,7 @@ class Kmeans:
         REWORD
         Find the predictions for the centroids and the data
         """
-        distance = self.all_euclidean_dist(centroids, data)
+        distance = self.euclidean_distance(centroids, data)
         assignments = self.label_clusters(distance)
         predictions = np.zeros(data.shape[0])
 
@@ -196,7 +196,7 @@ class Kmeans:
     # MATH SHIT ######################################################################
 
     @staticmethod
-    def euclidean_dist(centroids: NDArray[float], data: NDArray[float]) -> NDArray[float]:
+    def euclidean_row_distance(centroids: NDArray[float], data: NDArray[float]) -> NDArray[float]:
         """ Euclidean Distance
         Calculate the Eculidean distance of a data point and a centroid
                       ________
@@ -205,32 +205,19 @@ class Kmeans:
                       i=1
         """
 
-        row = np.sqrt(np.sum((centroids - data) ** 2, axis=1))
+        row_distance = np.sqrt(np.sum((centroids - data) ** 2, axis=1))
 
-        return row
+        return row_distance
 
-    #def all_euclidean_dist(self, centroids: [], data: []) -> NDArray[Any, Any]:
-    def all_euclidean_dist(self, centroids: NDArray[float], data: NDArray[float]) -> NDArray[float]:
+    def euclidean_distance(self, centroids: NDArray[float], data: NDArray[float]) -> NDArray[float]:
         """ Euclidean distances of all data """
 
-        # #dist = numpy.linalg.norm(a - b)
-        # a = centroids
-        # b = data[:, :-1]
-        # all_e_dist = np.linalg.norm(a - b)
-
-        all_e_dist = np.zeros([len(data), len(centroids)])
+        distance = np.zeros([len(data), len(centroids)])
 
         for i in range(len(centroids)):
-            all_e_dist[:, i] = self.euclidean_dist(centroids[i, :], data[:, :-1])
+            distance[:, i] = self.euclidean_row_distance(centroids[i, :], data[:, :-1])
 
-        return all_e_dist
-
-        # all_e_dist = np.zeros([len(data), len(centroids)])
-        #
-        # for i in range(len(centroids)):
-        #     all_e_dist[:, i] = np.linalg.norm(centroids[i, :] - data[:, :-1])
-        #
-        # return all_e_dist
+        return distance
 
     def minimize_mean_square_error(self, centroids: NDArray[float], data: NDArray[float], assign) -> float:
         """ Average Mean Square Error
@@ -253,7 +240,7 @@ class Kmeans:
             # YEAH - DON'T USE SUM!!!!
             # mse += np.sum(self.euclidean_dist(centroids[i], data[assign == i, :-1]) ** 2)
             # USE MEAN!!!!
-            mse += np.mean(self.euclidean_dist(centroids[i], data[assign == i, :-1]) ** 2)
+            mse += np.mean(self.euclidean_row_distance(centroids[i], data[assign == i, :-1]) ** 2)
 
         mse = mse / self.k
 
@@ -266,9 +253,10 @@ class Kmeans:
         Page 48 of KMeansClusteringMLSummer2020.pdf
         http://web.cecs.pdx.edu/~doliotis/MachineLearningSummer2020/lectures/lecture13/KMeansClusteringMLSummer2020.pdf
 
-        mss(C) = all distinct paris of clusters i, j in C (i != j)
-                 --------------------------------------------------
-                         K(K - 1) / 2
+                              k   mᵢ
+          mean entropy(C) =   ∑  --- entropy(cᵢ)
+                             i=1  m
+
         """
 
         mss = 0.0
@@ -283,14 +271,25 @@ class Kmeans:
 
         return mss / 2
 
-    def find_entropy(self, data: NDArray[float], assignment: NDArray[float]) -> float:
+    def calc_mean_entropy(self, data: NDArray[float], assignment: NDArray[float]) -> float:
         """ Find the Mean Entropy
         Find the Entropy of each cluster
+
+        Mean entropy of a clustering: Average entropy over all clusters in the clustering,
+        weighted by number of elements in each cluster:
+
+        Page 51 - 54 of KMeansClusteringMLSummer2020.pdf
+        http://web.cecs.pdx.edu/~doliotis/MachineLearningSummer2020/lectures/lecture13/KMeansClusteringMLSummer2020.pdf
+
+        mean entropy(C) = all distinct paris of clusters i, j in C (i != j)
+                 --------------------------------------------------
+                         K(K - 1) / 2
+
         """
 
         ratios = np.zeros(10)
         entropy = np.zeros(self.k)
-        m_entropy = 0
+        mean_entropy = 0
 
         # https://stackoverflow.com/questions/21610198/runtimewarning-divide-by-zero-encountered-in-log
         # np.seterr(divide = 'ignore')
@@ -299,20 +298,19 @@ class Kmeans:
         for i in range(self.k):
             for j in range(10):
                 ratios[j] = float(len(data[(assignment == i) & (data[:, -1] == j)])) / float(len(data[assignment == i]))
+
             log_ratio = np.log2(ratios)
             log_ratio[log_ratio == np.log2(0)] = 0
+
             entropy[i] = -np.sum(ratios * log_ratio)
-            m_entropy += entropy[i] * len(data[assignment == i])
+            mean_entropy += entropy[i] * len(data[assignment == i])
 
-        m_entropy /= len(data)
+        mean_entropy = mean_entropy / len(data)
 
-        return m_entropy
-
-    ####################################################################################
+        return mean_entropy
 
 
 if __name__ == "__main__":
-
     # Check Command line args
     if len(sys.argv) != 4:
         print("Incorrect number of command line arguments.\n")
