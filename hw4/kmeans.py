@@ -234,33 +234,44 @@ class Kmeans:
     def average_mean_square_error(self, centroids: NDArray[float], data: NDArray[float], assign) -> float:
         """ Average Mean Square Error
         Calculate the Average Mean Square Error of the resulting clustering on the training data
+
+        Page 45 of KMeansClusteringMLSummer2020.podf
+
+        NOTE: BIG-F***ING NOTE:
+        The assigned reading uses sum square error rather than mean square error
         """
 
         mse = 0
 
         for i in range(self.k):
+            # YEAH - DON'T USE SUM!!!!
             # mse += np.sum(self.euclidean_dist(centroids[i], data[assign == i, :-1]) ** 2)
-            mse += np.sum(self.euclidean_dist(centroids[i], data[assign == i, :-1]))
-
+            mse += np.mean(self.euclidean_dist(centroids[i], data[assign == i, :-1]) ** 2)
         return mse
 
     def find_sss(self, centroids: NDArray[float]) -> float:
         """ Mean Sum of Separation
         Find the SSS of the centroids.
+
+        Page 48 of KMeanseClusteringMLSummer2020.pdf
+
+        mss(C) = all distinct paris of clusters i, j in C (i != j)
+                 --------------------------------------------------
+                         K(K - 1) / 2
         """
 
         sss = 0.0
 
         for i in range(self.k):
             for j in range(self.k):
-                sss = sss + (centroids[i] - centroids[j]) ** 2
-
+                if i != j:
+                    sss = sss + (centroids[i] - centroids[j]) ** 2
 
         sss = np.sum(sss)
 
         mss = sss / ((self.k * (self.k - 1)) / 2)
 
-        return mss
+        return mss / 2
 
     # def find_sss(self, centroids: NDArray[float]) -> float:
     #     """ Mean Sum of Separation
