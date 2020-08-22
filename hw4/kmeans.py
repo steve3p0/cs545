@@ -98,8 +98,8 @@ class Kmeans:
                     break
                 prev_clusters = clusters
 
-            mss = self.find_sss(tmp_centroids)
-            mse = self.average_mean_square_error(tmp_centroids, self.train_data, clusters)
+            mss = self.maximize_pairwise_separation(tmp_centroids)
+            mse = self.minimize_mean_square_error(tmp_centroids, self.train_data, clusters)
 
             # Choose the run (out of 5) that yields the smallest average mean-square-error (mse)
             if self.mean_square_error < mse_prev or mse_prev == 0:
@@ -232,11 +232,12 @@ class Kmeans:
         #
         # return all_e_dist
 
-    def average_mean_square_error(self, centroids: NDArray[float], data: NDArray[float], assign) -> float:
+    def minimize_mean_square_error(self, centroids: NDArray[float], data: NDArray[float], assign) -> float:
         """ Average Mean Square Error
         Calculate the Average Mean Square Error of the resulting clustering on the training data
 
         Page 45 of KMeansClusteringMLSummer2020.pdf
+        http://web.cecs.pdx.edu/~doliotis/MachineLearningSummer2020/lectures/lecture13/KMeansClusteringMLSummer2020.pdf
 
                               ∑ mse(c)
             Average mse(C) =  c ∈ C
@@ -258,42 +259,29 @@ class Kmeans:
 
         return mse
 
-    def find_sss(self, centroids: NDArray[float]) -> float:
+    def maximize_pairwise_separation(self, centroids: NDArray[float]) -> float:
         """ Mean Square of Separation
         We also want to maximize pairwise separation of each cluster
 
-        Page 48 of KMeanseClusteringMLSummer2020.pdf
+        Page 48 of KMeansClusteringMLSummer2020.pdf
+        http://web.cecs.pdx.edu/~doliotis/MachineLearningSummer2020/lectures/lecture13/KMeansClusteringMLSummer2020.pdf
 
         mss(C) = all distinct paris of clusters i, j in C (i != j)
                  --------------------------------------------------
                          K(K - 1) / 2
         """
 
-        sss = 0.0
+        mss = 0.0
 
         for i in range(self.k):
             for j in range(self.k):
                 if i != j:
-                    sss = sss + (centroids[i] - centroids[j]) ** 2
-        sss = np.sum(sss)
-        mss = sss / ((self.k * (self.k - 1)) / 2)
+                    mss = mss + (centroids[i] - centroids[j]) ** 2
+
+        mss = np.sum(mss)
+        mss = mss / ((self.k * (self.k - 1)) / 2)
 
         return mss / 2
-
-    # def find_sss(self, centroids: NDArray[float]) -> float:
-    #     """ Mean Sum of Separation
-    #     Find the SSS of the centroids.
-    #     """
-    #
-    #     sss = 0.0
-    #
-    #     for i in range(self.k):
-    #         for j in range(self.k):
-    #             sss = sss + (centroids[i] - centroids[j]) ** 2
-    #
-    #     sss = np.sum(sss)
-    #
-    #     return sss
 
     def find_entropy(self, data: NDArray[float], assignment: NDArray[float]) -> float:
         """ Find the Mean Entropy
