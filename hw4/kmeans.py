@@ -199,12 +199,13 @@ class Kmeans:
     def euclidean_dist(centroids: NDArray[float], data: NDArray[float]) -> NDArray[float]:
         """ Euclidean Distance
         Calculate the Eculidean distance of a data point and a centroid
+                      ________
+           d(x, y) = √ n
+                       ∑(xᵢ - yᵢ)²
+                      i=1
         """
 
         row = np.sqrt(np.sum((centroids - data) ** 2, axis=1))
-        # row = np.sqrt((centroids - data) ** 2)
-        # row = np.sum((centroids - data) ** 2, axis=1)
-        # row = np.sqrt(np.sum((centroids - data), axis=1))
 
         return row
 
@@ -235,8 +236,12 @@ class Kmeans:
         """ Average Mean Square Error
         Calculate the Average Mean Square Error of the resulting clustering on the training data
 
-        Page 45 of KMeansClusteringMLSummer2020.podf
+        Page 45 of KMeansClusteringMLSummer2020.pdf
 
+                              ∑ mse(c)
+            Average mse(C) =  c ∈ C
+                              ------
+                                K
         NOTE: BIG-F***ING NOTE:
         The assigned reading uses sum square error rather than mean square error
         """
@@ -246,12 +251,16 @@ class Kmeans:
         for i in range(self.k):
             # YEAH - DON'T USE SUM!!!!
             # mse += np.sum(self.euclidean_dist(centroids[i], data[assign == i, :-1]) ** 2)
+            # USE MEAN!!!!
             mse += np.mean(self.euclidean_dist(centroids[i], data[assign == i, :-1]) ** 2)
+
+        mse = mse / self.k
+
         return mse
 
     def find_sss(self, centroids: NDArray[float]) -> float:
-        """ Mean Sum of Separation
-        Find the SSS of the centroids.
+        """ Mean Square of Separation
+        We also want to maximize pairwise separation of each cluster
 
         Page 48 of KMeanseClusteringMLSummer2020.pdf
 
@@ -266,9 +275,7 @@ class Kmeans:
             for j in range(self.k):
                 if i != j:
                     sss = sss + (centroids[i] - centroids[j]) ** 2
-
         sss = np.sum(sss)
-
         mss = sss / ((self.k * (self.k - 1)) / 2)
 
         return mss / 2
