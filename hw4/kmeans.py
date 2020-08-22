@@ -292,8 +292,7 @@ class Kmeans:
         mean_entropy = 0
 
         # https://stackoverflow.com/questions/21610198/runtimewarning-divide-by-zero-encountered-in-log
-        # np.seterr(divide = 'ignore')
-        # np.seterr(divide='warn')
+        np.seterr(divide = 'ignore')
 
         for i in range(self.k):
             for j in range(10):
@@ -307,6 +306,7 @@ class Kmeans:
 
         mean_entropy = mean_entropy / len(data)
 
+        np.seterr(divide='warn')
         return mean_entropy
 
 
